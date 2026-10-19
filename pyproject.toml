@@ -3,13 +3,29 @@ name = "daily-note"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    {name = "Olga",email = "08241989@mail.ru"}
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.12,<4.0"
 dependencies = [
+    "django (>=6.0,<6.1)",
+    "python-dotenv (>=1.2.4,<2.0.0)"
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+lint = [
+    "flake8 (>=7.4.1,<8.0.0)",
+    "black (>=26.10.1,<27.0.0)",
+    "isort (>=9.0.2,<10.0.0)"
+]
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.black]
+line-length = 120
