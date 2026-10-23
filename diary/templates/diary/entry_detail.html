@@ -1,0 +1,38 @@
+{% extends "diary/base.html" %}
+{% block title %}{{ entry.title }}{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1 class="page-title" style="max-width: 75%;">{{ entry.title }}</h1>
+        <div class="text-muted">{{ entry.created_at|date:"j E Y, H:i" }}</div>
+    </div>
+
+    <div style="max-width: 860px;">
+        <p style="white-space: pre-line; font-size: 16px; line-height: 1.75;">
+            {{ entry.content }}
+        </p>
+
+        {% with entry.tags.all as tags %}
+            {% if tags %}
+                <div class="tags mt-4">
+                    {% for tag in tags %}
+                        <span class="tag-pill">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% if entry.reminder_at %}
+            <p class="mt-4 text-muted">
+                ⏰ Напоминание: {{ entry.reminder_at|date:"j E Y, H:i" }}
+                {% if entry.reminder_sent %}(отправлено){% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="mt-5 d-flex gap-2 flex-wrap">
+        <a href="{% url 'diary:entry_update' entry.pk %}" class="btn-mint">Редактировать</a>
+        <a href="{% url 'diary:entry_delete' entry.pk %}" class="btn-ghost">Удалить</a>
+        <a href="{% url 'diary:entry_list' %}" class="btn-ghost">← К списку</a>
+    </div>
+{% endblock %}

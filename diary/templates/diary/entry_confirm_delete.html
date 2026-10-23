@@ -1,0 +1,21 @@
+{% extends "diary/base.html" %}
+{% block title %}Удалить запись{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1 class="page-title">Удалить запись?</h1>
+    </div>
+
+    <p>
+        Вы уверены, что хотите удалить «<strong>{{ object.title }}</strong>»?
+        Это действие необратимо.
+    </p>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        <button type="submit" class="btn-mint" style="background:#c98b8b;color:#fff;">
+            Удалить
+        </button>
+        <a href="{{ object.get_absolute_url }}" class="btn-ghost">Отмена</a>
+    </form>
+{% endblock %}

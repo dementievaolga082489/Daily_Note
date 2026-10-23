@@ -1,0 +1,41 @@
+{% extends "diary/base.html" %}
+{% block title %}Привязка Telegram{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1 class="page-title">Привязка Telegram</h1>
+    </div>
+
+    <p class="text-muted">
+        Чтобы получать напоминания, укажите ваш <code>chat_id</code>.
+        Узнать его можно через бота
+        <a href="https://t.me/userinfobot" target="_blank" rel="noopener"
+           style="color: var(--accent-hover);">@userinfobot</a>.
+    </p>
+
+    <form method="post" style="max-width: 460px;" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+
+        <div class="d-flex gap-2 mt-4 flex-wrap align-items-center">
+            <button type="submit" class="btn-mint">Сохранить</button>
+            <a href="{% url 'users:profile' %}" class="btn-ghost">← К профилю</a>
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "diary/base.html" %}
+{% block title %}{% if object %}Редактировать запись{% else %}Новая запись{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1 class="page-title">
+            {% if object %}Редактировать запись{% else %}Новая запись{% endif %}
+        </h1>
+    </div>
+
+    <form method="post" novalidate style="max-width: 860px;">
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn-mint">Сохранить</button>
+            <a href="{% url 'diary:entry_list' %}" class="btn-ghost">Отмена</a>
+        </div>
+    </form>
+{% endblock %}

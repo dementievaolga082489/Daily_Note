@@ -1,0 +1,17 @@
+{% extends "diary/base.html" %}
+{% block title %}Дневник{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1 class="page-title">Добро пожаловать</h1>
+    </div>
+
+    <p class="text-muted mb-4">Сегодня {{ today|date:"j E Y" }}.</p>
+
+    {% if user.is_authenticated %}
+        <a href="{% url 'diary:entry_list' %}" class="btn-mint">Перейти к записям</a>
+    {% else %}
+        <a href="{% url 'users:register' %}" class="btn-mint">Начать</a>
+        <a href="{% url 'users:login' %}" class="btn-ghost ms-2">Вход</a>
+    {% endif %}
+{% endblock %}

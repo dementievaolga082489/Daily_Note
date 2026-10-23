@@ -1,0 +1,157 @@
+{% extends "diary/base.html" %}
+{% block title %}{% if current_notebook %}{{ current_notebook.title }}{% else %}Мой дневник{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <div class="d-flex align-items-center gap-3">
+            {% if current_notebook %}
+                <!-- Кнопка назад, если мы внутри папки -->
+                <a href="{% url 'diary:entry_list' %}" class="btn-ghost" style="padding: 6px 12px; font-size: 16px;" title="Вернуться ко всем записям">
+                    ←
+                </a>
+            {% endif %}
+
+            <h1 class="page-title m-0">
+                {% if current_notebook %}
+                    📁 {{ current_notebook.title }}
+                {% else %}
+                    Мой дневник
+                {% endif %}
+            </h1>
+        </div>
+
+        <!-- Если мы в Ежедневнике, подставляем его ID в ссылку создания -->
+        <a href="{% url 'diary:entry_create' %}{% if current_notebook_id %}?notebook={{ current_notebook_id }}{% endif %}" class="btn-mint">
+            + Создать запись
+        </a>
+    </div>
+
+    <!-- Строка поиска -->
+    <form method="get" class="mb-4">
+        {% if current_notebook_id %}
+            <input type="hidden" name="notebook" value="{{ current_notebook_id }}">
+        {% endif %}
+        <div class="input-group" style="max-width: 420px;">
+            <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Поиск по записям...">
+            <button class="btn btn-outline-secondary" type="submit">Найти</button>
+        </div>
+    </form>
+
+    <!-- Список записей строками -->
+    {% if entries %}
+        <div class="entry-list">
+            {% for entry in entries %}
+                <div class="entry-row">
+                    <!-- Дата записи (из нового поля date) -->
+                    <div class="entry-date">{{ entry.date|date:"d.m.Y" }}</div>
+
+                    <!-- Заголовок со ссылкой -->
+                    <div class="entry-title">
+                        <a href="{{ entry.get_absolute_url }}">{{ entry.title }}</a>
+                    </div>
+
+                    <!-- Показываем папку, только если мы в общем списке -->
+                    {% if not current_notebook and entry.notebook %}
+                        <div class="entry-notebook">📁 {{ entry.notebook.title }}</div>
+                    {% endif %}
+
+                    <!-- Короткий текст записи -->
+                    <div class="entry-preview">{{ entry.content|truncatewords:12 }}</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Пагинация -->
+        {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_notebook_id %}&notebook={{ current_notebook_id }}{% endif %}">←</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item disabled">
+                        <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_notebook_id %}&notebook={{ current_notebook_id }}{% endif %}">→</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <p class="text-muted mt-4">
+            {% if current_notebook %}
+                В этом дневнике пока нет записей.
+            {% else %}
+                Записей пока нет. Создайте первую!
+            {% endif %}
+        </p>
+    {% endif %}
+
+    <!-- Стили для красивого отображения строк -->
+    <style>
+        .entry-list {
+            display: flex;
+            flex-direction: column;
+            border-top: 1px solid var(--border);
+        }
+        .entry-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 12px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .entry-row:hover {
+            background: var(--paper-2);
+        }
+        .entry-date {
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 90px;
+            font-size: 14px;
+        }
+        .entry-title {
+            font-size: 16px;
+            font-weight: 600;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .entry-title a {
+            color: var(--text);
+            text-decoration: none;
+        }
+        .entry-title a:hover {
+            color: var(--accent-hover);
+        }
+        .entry-notebook {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--border);
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .entry-preview {
+            font-size: 13px;
+            color: var(--text-muted);
+            max-width: 320px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* На мобильных скрываем превью текста, чтобы не было каши */
+        @media (max-width: 768px) {
+            .entry-preview { display: none; }
+            .entry-row { flex-wrap: wrap; gap: 8px; }
+        }
+    </style>
+{% endblock %}
