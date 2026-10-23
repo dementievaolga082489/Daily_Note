@@ -59,30 +59,25 @@ class User(AbstractUser):
         return self.get_full_name() or self.username
 
 
-class TelegramProfile(models.Model):
-    """Привязка пользователя к Telegram chat_id.
-
-    Создаётся явно в представлениях (`get_or_create`) — без сигналов.
-    """
+class MaxProfile(models.Model):
+    """Привязка пользователя к MAX (мессенджер VK)."""
 
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name="telegram_profile",
+        related_name="max_profile",
         verbose_name="Пользователь",
-        help_text="Владелец Telegram-профиля.",
     )
-    chat_id = models.CharField(
-        "Telegram chat_id",
+    max_user_id = models.CharField(
+        "ID пользователя в MAX",
         max_length=64,
         blank=True,
-        help_text="Узнать можно через бота @userinfobot. Пустое значение — "
-                  "напоминания не отправляются.",
+        help_text="Ваш ID в MAX (можно узнать через бота).",
     )
 
     class Meta:
-        verbose_name = "Telegram-профиль"
-        verbose_name_plural = "Telegram-профили"
+        verbose_name = "Профиль MAX"
+        verbose_name_plural = "Профили MAX"
 
-    def __str__(self) -> str:
-        return f"{self.user.username} → {self.chat_id or 'не привязан'}"
+    def __str__(self):
+        return f"{self.user.username} → {self.max_user_id or 'не привязан'}"

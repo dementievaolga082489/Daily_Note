@@ -24,32 +24,39 @@ class Tag(models.Model):
     def __str__(self) -> str:
         return self.name
 
-class Notebook(models.Model):
-    """Дневник (папка) пользователя — контейнер для записей."""
 
+class Notebook(models.Model):
+    """Дневник (папка) пользователя."""
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="notebooks",
         verbose_name="Автор",
-        help_text="Владелец дневника.",
     )
-    title = models.CharField(
-        "Название", max_length=120,
-        help_text="Например: «Путешествия», «Работа», «Мысли».",
+    title = models.CharField("Название", max_length=120)
+
+    # ★ Новое поле: родительская папка
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="children",
+        verbose_name="Родительская папка",
+        help_text="Оставьте пустым, если это корневая папка."
     )
-    created_at = models.DateTimeField(
-        "Создан", auto_now_add=True,
-    )
+
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
 
     class Meta:
         verbose_name = "Дневник"
         verbose_name_plural = "Дневники"
         ordering = ["title"]
+        # Уникальность названия теперь проверяем внутри одной родительской папки
         constraints = [
             models.UniqueConstraint(
-                fields=["author", "title"],
-                name="unique_notebook_title_per_user",
+                fields=["author", "parent", "title"],
+                name="unique_notebook_title_per_parent",
             ),
         ]
 

@@ -19,25 +19,13 @@
             --accent: #9ec9b8;
             --accent-hover: #8abaa7;
             --accent-soft: #d6e7df;
-            --secondary: #a9b8b3;
-            --secondary-hover: #94a5a0;
-
-            --tag-1: #cfe3da;
-            --tag-2: #d8e3e6;
-            --tag-3: #dfe6d5;
-            --tag-4: #e6e0ea;
         }
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
+        html, body { margin: 0; padding: 0; min-height: 100vh; }
         body {
             background: var(--bg-1);
-            background-image:
-                radial-gradient(circle at 15% 10%, var(--bg-2) 0%, transparent 55%),
-                radial-gradient(circle at 85% 90%, var(--bg-2) 0%, transparent 55%);
+            background-image: radial-gradient(circle at 15% 10%, var(--bg-2) 0%, transparent 55%),
+                              radial-gradient(circle at 85% 90%, var(--bg-2) 0%, transparent 55%);
             background-attachment: fixed;
             color: var(--text);
             font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -46,397 +34,192 @@
             min-height: 100vh;
         }
 
-        /* ═══════════ ШАПКА СВЕРХУ (на всю ширину) ═══════════ */
+        /* ═══════════ ШАПКА СВЕРХУ ═══════════ */
         .topbar {
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            position: sticky; top: 0; z-index: 100;
             background: rgba(246, 248, 247, 0.94);
             backdrop-filter: blur(8px);
             border-bottom: 1px solid var(--border);
             padding: 12px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            flex-wrap: wrap;
+            display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
         }
-        .topbar .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 17px;
-            letter-spacing: 0.3px;
-            color: var(--text);
-            text-decoration: none;
-        }
-        .topbar .brand svg {
-            width: 24px;
-            height: 24px;
-            color: var(--accent-hover);
-        }
+        .topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; color: var(--text); text-decoration: none; }
+        .topbar .brand svg { width: 24px; height: 24px; color: var(--accent-hover); }
+        .topbar-actions { display: flex; align-items: center; gap: 10px; }
+        .topbar-user { font-size: 14px; color: var(--text-muted); margin-right: 4px; }
 
-        .topbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .topbar-user {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-right: 4px;
-        }
+        /* ═══════════ LAYOUT ═══════════ */
+        .layout { display: flex; flex: 1; width: 100%; }
 
-        /* ═══════════ ДВУХКОЛОНОЧНЫЙ LAYOUT ═══════════ */
-        .layout {
-            display: flex;
-            flex: 1;
-            width: 100%;
-        }
-
-        /* ─── Левый сайдбар ─── */
         .sidebar {
-            width: 260px;
-            min-width: 260px;
+            width: 280px; min-width: 280px;
             background: var(--paper);
             border-right: 1px solid var(--border);
             padding: 24px 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            position: sticky;
-            top: 61px;
-            height: calc(100vh - 61px);
-            box-sizing: border-box;
-            overflow-y: auto;
+            display: flex; flex-direction: column; gap: 20px;
+            position: sticky; top: 61px; height: calc(100vh - 61px);
+            box-sizing: border-box; overflow-y: auto; overflow-x: hidden; /* Скрываем горизонтальный скролл */
         }
 
-        /* ─── Кнопки-навигация ─── */
-        .side-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .side-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            border-radius: 8px;
-            color: var(--text);
-            text-decoration: none;
-            font-size: 14.5px;
-            transition: background .15s;
-        }
+        .side-nav { display: flex; flex-direction: column; gap: 4px; }
+        .side-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; color: var(--text); text-decoration: none; font-size: 14.5px; transition: background .15s; }
         .side-link:hover { background: var(--paper-2); }
-        .side-link.active {
-            background: var(--accent-soft);
-            font-weight: 600;
-            color: var(--text);
-        }
+        .side-link.active { background: var(--accent-soft); font-weight: 600; }
         .side-link .ico { width: 20px; text-align: center; }
 
-        /* ─── Секция «Дневники» ─── */
-        .side-section {
-            border-top: 1px solid var(--border);
-            padding-top: 16px;
+        .side-section { border-top: 1px solid var(--border); padding-top: 16px; }
+        .side-section-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; padding: 0 4px; }
+
+        .side-actions { display: flex; gap: 4px; align-items: center; }
+        .side-add, .side-collapse { font-size: 18px; line-height: 1; color: var(--accent-hover); text-decoration: none; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: background .15s; cursor: pointer; }
+        .side-add:hover, .side-collapse:hover { background: var(--accent-soft); }
+
+        /* ─── ДЕРЕВО ПАПОК (ИСПРАВЛЕННЫЕ ОТСТУПЫ) ─── */
+        .nb-tree-container { font-size: 14px; width: 100%; }
+        .nb-sublist { list-style: none; padding: 0; margin: 0; }
+
+        /* Отступ делаем только для вложенных UL, убираем border, чтобы не было съездов */
+        .nb-subdetails > .nb-sublist {
+            padding-left: 14px;
+            margin-left: 9px;
+            border-left: 1px dashed var(--border);
         }
-        .side-section-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            padding: 0 4px;
-        }
-        .side-add {
-            font-size: 20px;
-            line-height: 1;
-            color: var(--accent-hover);
-            text-decoration: none;
-            width: 22px;
-            height: 22px;
+
+        .nb-tree-item { margin: 0; padding: 0; }
+        .nb-row {
             display: flex;
             align-items: center;
-            justify-content: center;
             border-radius: 6px;
             transition: background .15s;
+            position: relative;
+            width: 100%;
         }
-        .side-add:hover { background: var(--accent-soft); }
+        .nb-row:hover { background: var(--paper-2); }
+        .nb-row:hover .nb-actions { opacity: 1; }
 
-        /* ─── Выпадающий список дневников ─── */
-        .nb-dropdown { font-size: 14px; }
-        .nb-dropdown summary {
+        .nb-subdetails { display: flex; flex-direction: column; width: 100%; margin: 0; padding: 0; }
+        .nb-subdetails > summary {
+            list-style: none;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 9px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            background: var(--paper-2);
-            color: var(--text);
-            user-select: none;
-            list-style: none;
-            font-weight: 600;
+            width: 100%;
+            outline: none;
+            padding: 4px 0;
         }
-        .nb-dropdown summary::-webkit-details-marker { display: none; }
-        .nb-dropdown summary::after {
-            content: "▾";
-            margin-left: auto;
-            font-size: 11px;
+        .nb-subdetails > summary::-webkit-details-marker { display: none; }
+
+        .nb-arrow {
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .nb-arrow::before {
+            content: "▸";
+            font-size: 14px;
             color: var(--text-muted);
             transition: transform .15s;
+            display: inline-block;
         }
-        .nb-dropdown[open] summary::after { transform: rotate(180deg); }
-        .nb-dropdown summary:hover { background: var(--accent-soft); }
+        .nb-subdetails[open] > summary .nb-arrow::before {
+            transform: rotate(90deg);
+        }
 
-        .nb-list {
-            list-style: none;
-            padding: 6px 0 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .nb-list li a.nb-link {
-            display: block;
-            padding: 7px 12px 7px 20px;
-            border-radius: 6px;
+        .nb-spacer { width: 20px; flex-shrink: 0; }
+        .nb-content { display: flex; align-items: center; flex: 1; min-width: 0; padding: 4px 0; }
+
+        .nb-link {
+            flex: 1;
+            padding: 4px 8px;
             color: var(--text);
             text-decoration: none;
-            font-size: 13.5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            transition: background .15s;
+            border-radius: 6px;
+            font-size: 14px;
         }
-        .nb-list li a.nb-link:hover { background: var(--paper-2); }
-        .nb-list li a.nb-link.active {
-            background: var(--accent-soft);
-            font-weight: 600;
-        }
+        .nb-link.active { background: var(--accent-soft); font-weight: 600; }
 
-        .nb-item {
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-        .nb-item > a.nb-link {
-            flex: 1;
-            min-width: 0;
-        }
-        .nb-del {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 18px;
-            line-height: 1;
-            padding: 2px 8px;
-            border-radius: 4px;
-            opacity: 0;
-            transition: opacity .15s, background .15s;
-        }
-        .nb-item:hover .nb-del { opacity: 1; }
-        .nb-del:hover { background: #f0dada; color: #b04a4a; }
+        .nb-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; padding-right: 4px; }
+        .nb-action { color: var(--text-muted); text-decoration: none; font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
+        .nb-action:hover { background: var(--accent-soft); color: var(--text); }
 
-        .nb-empty {
-            color: var(--text-muted);
-            font-size: 13px;
-            padding: 6px 12px 6px 20px;
-            font-style: italic;
-        }
+        .nb-empty { color: var(--text-muted); font-size: 13px; padding: 6px 12px; font-style: italic; }
+
+        /* Форма быстрого создания */
+        .quick-add-form { display: flex; gap: 4px; padding: 10px 4px 0; border-top: 1px solid var(--border); margin-top: 10px; }
+        .quick-add-input { flex: 1; font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: 6px; outline: none; min-width: 0; }
+        .quick-add-btn { background: var(--accent); color: var(--text); border: none; border-radius: 6px; padding: 0 10px; font-size: 18px; cursor: pointer; }
 
         /* ═══════════ ПРАВАЯ ЧАСТЬ ═══════════ */
-        .page-wrap {
-            flex: 1;
-            min-width: 0;
-            padding: 32px 48px 64px;
-            box-sizing: border-box;
-        }
+        .page-wrap { flex: 1; min-width: 0; padding: 32px 48px 64px; box-sizing: border-box; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .page-title { font-weight: 800; font-size: 30px; margin: 0; }
 
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 28px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-        .page-title {
-            font-weight: 800;
-            font-size: 30px;
-            letter-spacing: 0.3px;
-            margin: 0;
-            color: var(--text);
-        }
-
-        /* ─── Кнопки ─── */
-        .btn-mint {
-            background: var(--accent);
-            color: var(--text);
-            border: none;
-            border-radius: 8px;
-            padding: 8px 18px;
-            font-size: 14px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: background .15s;
-            display: inline-block;
-            cursor: pointer;
-        }
+        .btn-mint { background: var(--accent); color: var(--text); border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; display: inline-block; }
         .btn-mint:hover { background: var(--accent-hover); color: var(--text); }
+        .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border-strong); border-radius: 8px; padding: 7px 16px; font-size: 14px; text-decoration: none; cursor: pointer; display: inline-block; }
+        .btn-ghost:hover { background: var(--paper-2); border-color: var(--accent-hover); }
 
-        .btn-ghost {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--border-strong);
-            border-radius: 8px;
-            padding: 7px 16px;
-            font-size: 14px;
-            text-decoration: none;
-            transition: background .15s, border-color .15s;
-            display: inline-block;
-            cursor: pointer;
-        }
-        .btn-ghost:hover {
-            background: var(--paper-2);
-            border-color: var(--accent-hover);
-            color: var(--text);
-        }
-
-        /* ─── Карточки записей ─── */
-        .entry-card {
-            background: var(--paper);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 24px 26px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            transition: border-color .15s, transform .15s;
-        }
-        .entry-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-        .entry-card .date {
-            color: var(--text-muted);
-            font-size: 13px;
-            letter-spacing: 0.3px;
-            margin-bottom: 8px;
-        }
-        .entry-card h3 {
-            font-weight: 700;
-            font-size: 20px;
-            margin: 0 0 12px;
-            line-height: 1.3;
-        }
-        .entry-card h3 a {
-            color: var(--text);
-            text-decoration: none;
-        }
+        .entry-card { background: var(--paper); border: 1px solid var(--border); border-radius: 10px; padding: 24px 26px; height: 100%; display: flex; flex-direction: column; transition: border-color .15s; }
+        .entry-card:hover { border-color: var(--accent); }
+        .entry-card .date { color: var(--text-muted); font-size: 13px; margin-bottom: 8px; }
+        .entry-card h3 { font-weight: 700; font-size: 20px; margin: 0 0 12px; }
+        .entry-card h3 a { color: var(--text); text-decoration: none; }
         .entry-card h3 a:hover { color: var(--accent-hover); }
-        .entry-card p {
-            color: #4a5651;
-            font-size: 14.5px;
-            line-height: 1.6;
-            flex: 1;
-            margin: 0;
-        }
+        .entry-card p { color: #4a5651; font-size: 14.5px; line-height: 1.6; flex: 1; margin: 0; }
 
-        /* ─── Теги ─── */
-        .tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 18px;
-        }
-        .tag-pill {
-            display: inline-block;
-            padding: 3px 12px;
-            border-radius: 999px;
-            font-size: 12.5px;
-            color: var(--text);
-            border: 1px solid rgba(0,0,0,0.04);
-        }
-        .tags .tag-pill:nth-child(4n+1) { background: var(--tag-1); }
-        .tags .tag-pill:nth-child(4n+2) { background: var(--tag-2); }
-        .tags .tag-pill:nth-child(4n+3) { background: var(--tag-3); }
-        .tags .tag-pill:nth-child(4n+4) { background: var(--tag-4); }
+        .form-control, .form-select { border-radius: 8px; border: 1px solid var(--border-strong); background: #ffffff; }
+        .form-control:focus, .form-select:focus { border-color: var(--accent-hover); box-shadow: 0 0 0 0.2rem rgba(158, 201, 184, 0.35); }
+        ul.errorlist { list-style: none; padding: 0; margin: 4px 0 0; color: #b04a4a; font-size: 13px; }
+        .alert { border-radius: 8px; border: 1px solid var(--border); }
 
-        /* ─── Формы ─── */
-        .form-control, .form-select {
-            border-radius: 8px;
+        /* ─── Стили для контекстного меню ─── */
+        .context-menu {
+            display: none;
+            position: absolute;
+            background: #fff;
             border: 1px solid var(--border-strong);
-            background: #ffffff;
-            color: var(--text);
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--accent-hover);
-            box-shadow: 0 0 0 0.2rem rgba(158, 201, 184, 0.35);
-            background: #ffffff;
-        }
-        ul.errorlist {
-            list-style: none;
-            padding: 0;
-            margin: 4px 0 0;
-            color: #b04a4a;
-            font-size: 13px;
-        }
-
-        /* ─── Прочее ─── */
-        .alert {
             border-radius: 8px;
-            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 160px;
+            padding: 6px 0;
         }
-        .list-group-item {
-            background: var(--paper);
-            border-color: var(--border);
-        }
-        .pagination .page-link {
+        .context-menu a {
+            display: block;
+            padding: 8px 16px;
             color: var(--text);
-            border-color: var(--border);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.15s;
         }
-        .pagination .page-link:hover {
-            background: var(--accent-soft);
-            border-color: var(--accent);
+        .context-menu a:hover {
+            background: var(--paper-2);
+        }
+        .context-menu a.danger {
+            color: #b04a4a;
+        }
+        .context-menu a.danger:hover {
+            background: #f0dada;
         }
 
-        /* ─── Адаптив ─── */
         @media (max-width: 860px) {
             .layout { flex-direction: column; }
-            .sidebar {
-                width: 100%;
-                min-width: 0;
-                height: auto;
-                position: relative;
-                top: auto;
-            }
+            .sidebar { width: 100%; min-width: 0; height: auto; position: relative; top: auto; }
             .page-wrap { padding: 24px 18px 40px; }
-            .page-title { font-size: 24px; }
-            .topbar { padding: 10px 16px; }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-<!-- ═══════════ ВЕРХНЯЯ ШАПКА ═══════════ -->
 <header class="topbar">
     <a href="{% url 'diary:index' %}" class="brand">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="16" rx="2"/>
-            <path d="M3 9h18M8 4v5M8 13h6M8 16h4"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M8 13h6M8 16h4"/></svg>
         Дневник
     </a>
-
     <div class="topbar-actions">
         {% if user.is_authenticated %}
             <span class="topbar-user">{{ user.full_name }}</span>
@@ -448,27 +231,32 @@
     </div>
 </header>
 
-<!-- ═══════════ САЙДБАР + КОНТЕНТ ═══════════ -->
 <div class="layout">
-
-    <!-- Левый сайдбар -->
     <aside class="sidebar">
         <nav class="side-nav">
-            <a href="{% url 'diary:entry_list' %}"
-               class="side-link {% if request.resolver_match.url_name == 'entry_list' and not request.GET.notebook %}active{% endif %}">
+            <a href="{% url 'diary:entry_list' %}" class="side-link {% if request.resolver_match.url_name == 'entry_list' and not request.GET.notebook %}active{% endif %}">
                 <span class="ico">📝</span> Все записи
             </a>
-
-            <a href="{% url 'diary:calendar' %}"
-               class="side-link {% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
-                <span class="ico">🔔</span> Напоминания
-            </a>
-
             {% if user.is_authenticated %}
-                <a href="{% url 'users:profile' %}"
-                   class="side-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-                    <span class="ico">👤</span> Профиль
-                </a>
+            <details class="nb-subdetails" style="margin-top: 4px;">
+                <summary class="side-link" style="padding: 9px 12px; background: transparent;">
+                    <span class="ico">🔔</span> Напоминания
+                </summary>
+                <ul style="list-style: none; padding-left: 32px; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+                    {% for r in side_calendar_reminders %}
+                        <li><a href="{% url 'diary:calendar' %}" class="nb-link" style="padding: 4px 8px; font-size: 13px;" title="{{ r.title }}">📅 {{ r.remind_at|date:"d.m H:i" }} — {{ r.title|truncatechars:15 }}</a></li>
+                    {% endfor %}
+                    {% for e in side_entry_reminders %}
+                        <li><a href="{{ e.get_absolute_url }}" class="nb-link" style="padding: 4px 8px; font-size: 13px;" title="{{ e.title }}">📝 {{ e.reminder_at|date:"d.m H:i" }} — {{ e.title|default:"Без названия"|truncatechars:15 }}</a></li>
+                    {% endfor %}
+                    {% if not side_calendar_reminders and not side_entry_reminders %}
+                        <li style="font-size: 13px; color: var(--text-muted); font-style: italic; padding-left: 8px;">Нет напоминаний</li>
+                    {% endif %}
+                </ul>
+            </details>
+            <a href="{% url 'users:profile' %}" class="side-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                <span class="ico">👤</span> Профиль
+            </a>
             {% endif %}
         </nav>
 
@@ -476,37 +264,30 @@
             <div class="side-section">
                 <div class="side-section-head">
                     <span>Дневники</span>
-                    <a href="{% url 'diary:notebook_create' %}"
-                       class="side-add" title="Создать дневник">+</a>
+                    <div class="side-actions">
+                        <a href="?close_all=1" class="side-collapse" title="Свернуть все папки">⇱</a>
+                        <a href="{% url 'diary:notebook_create' %}" class="side-add" title="Создать корневую папку">+</a>
+                    </div>
                 </div>
 
-                {% with request.GET.notebook as current_nb %}
-                <details class="nb-dropdown" {% if current_nb %}open{% endif %}>
-                    <summary>
-                        <span>Все дневники</span>
-                    </summary>
-
-                    <ul class="nb-list">
-                        {% for nb in side_notebooks %}
-                            <li class="nb-item">
-                                <a href="{% url 'diary:entry_list' %}?notebook={{ nb.id }}"
-                                   class="nb-link {% if current_nb == nb.id|stringformat:'s' %}active{% endif %}">
-                                    📁 {{ nb.title }}
-                                </a>
-                                <a href="{% url 'diary:notebook_delete' nb.pk %}"
-                                   class="nb-del" title="Удалить">×</a>
-                            </li>
-                        {% empty %}
+                <div class="nb-tree-container">
+                    <ul class="nb-sublist">
+                        {% include "diary/notebook_tree.html" with notebooks=side_notebooks %}
+                        {% if not side_notebooks %}
                             <li class="nb-empty">Папок пока нет</li>
-                        {% endfor %}
+                        {% endif %}
                     </ul>
-                </details>
-                {% endwith %}
+                </div>
+
+                <form method="post" action="{% url 'diary:notebook_create' %}" class="quick-add-form">
+                    {% csrf_token %}
+                    <input type="text" name="title" placeholder="Новая папка..." class="quick-add-input" required>
+                    <button type="submit" class="quick-add-btn" title="Создать">+</button>
+                </form>
             </div>
         {% endif %}
     </aside>
 
-    <!-- Правая часть -->
     <main class="page-wrap">
         {% if messages %}
             {% for message in messages %}
@@ -515,9 +296,44 @@
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+</div>
 
+<!-- Контекстное меню (скрыто по умолчанию) -->
+<div id="contextMenu" class="context-menu">
+    <a href="#" id="ctxEdit">✏️ Переименовать</a>
+    <a href="#" id="ctxDelete" class="danger">🗑️ Удалить</a>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const contextMenu = document.getElementById('contextMenu');
+    const ctxEdit = document.getElementById('ctxEdit');
+    const ctxDelete = document.getElementById('ctxDelete');
+
+    // Функция вызова меню
+    function showContextMenu(e, notebookId, notebookTitle) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Позиционируем меню по курсору
+        contextMenu.style.left = e.pageX + 'px';
+        contextMenu.style.top = e.pageY + 'px';
+        contextMenu.style.display = 'block';
+
+        // Настраиваем ссылки
+        ctxEdit.href = `/notebooks/${notebookId}/edit/`; // Ссылка на редактирование
+        ctxDelete.href = `/notebooks/${notebookId}/delete/`; // Ссылка на удаление
+    }
+
+    // Скрываем меню при клике в любом другом месте
+    document.addEventListener('click', function() {
+        contextMenu.style.display = 'none';
+    });
+
+    // Скрываем при скролле
+    window.addEventListener('scroll', function() {
+        contextMenu.style.display = 'none';
+    });
+</script>
 </body>
 </html>

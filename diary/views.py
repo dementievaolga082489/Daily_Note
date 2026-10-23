@@ -85,7 +85,6 @@ class EntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
         ctx["query"] = self.request.GET.get("q", "")
         ctx["notebooks"] = notebooks
-        ctx["side_notebooks"] = notebooks
         ctx["current_notebook_id"] = current_notebook_id
         ctx["current_notebook"] = (
             notebooks.filter(pk=int(current_notebook_id)).first()
@@ -144,7 +143,6 @@ class EntryDetailView(OwnEntryRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["side_notebooks"] = Notebook.objects.filter(author=self.request.user)
         return ctx
 
 
@@ -185,14 +183,26 @@ class NotebookCreateView(LoginRequiredMixin, CreateView):
         kwargs["author"] = self.request.user
         return kwargs
 
+    def get_initial(self):
+        initial = super().get_initial()
+        parent_id = self.request.GET.get("parent", "").strip()
+        if parent_id.isdigit():
+            parent_obj = Notebook.objects.filter(author=self.request.user, pk=int(parent_id)).first()
+            if parent_obj:
+                initial["parent"] = parent_obj
+        return initial
+
     def form_valid(self, form):
         form.instance.author = self.request.user
         messages.success(self.request, "Дневник создан.")
         return super().form_valid(form)
 
     def get_success_url(self):
+        # Если создали подпапку, переходим в неё. Если корневую — в общий список.
+        parent_id = self.request.POST.get("parent", "")
+        if parent_id:
+            return reverse_lazy("diary:entry_list") + f"?notebook={parent_id}"
         return reverse_lazy("diary:entry_list")
-
 
 class NotebookDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     """Удаление дневника (папки). Только автор."""
@@ -203,6 +213,27 @@ class NotebookDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self) -> bool:
         return self.get_object().author == self.request.user
+
+class NotebookUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Редактирование (переименование) дневника (папки)."""
+    model = Notebook
+    form_class = NotebookForm
+    template_name = "diary/notebook_form.html" # Используем ту же форму
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["author"] = self.request.user
+        return kwargs
+
+    def test_func(self) -> bool:
+        return self.get_object().author == self.request.user
+
+    def form_valid(self, form):
+        messages.success(self.request, "Дневник обновлён.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("diary:entry_list")
 
 
 # ─── Календарь напоминаний ────────────────────────────────────────────────
@@ -232,7 +263,6 @@ class CalendarView(LoginRequiredMixin, View):
         return render(request, self.template_name, {
             "grouped_reminders": grouped,
             "month": month_param,
-            "side_notebooks": Notebook.objects.filter(author=request.user),
         })
 
 
@@ -285,7 +315,6 @@ class ByDateView(LoginRequiredMixin, View):
             "target_date": target,
             "entries": entries,
             "reminders": reminders,
-            "side_notebooks": Notebook.objects.filter(author=request.user),
         })
 
 
@@ -312,5 +341,4 @@ class ByTitleView(LoginRequiredMixin, View):
             "query": query,
             "entries": entries,
             "reminders": reminders,
-            "side_notebooks": Notebook.objects.filter(author=request.user),
         })

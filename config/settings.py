@@ -152,4 +152,5 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+MAX_BOT_TOKEN = os.getenv("MAX_BOT_TOKEN", "")
+MAX_API_URL = "https://botapi.max.ru"  # Базовый URL API MAX

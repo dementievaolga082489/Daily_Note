@@ -17,6 +17,8 @@ urlpatterns = [
     # Notebooks (папки/дневники)
     path("notebooks/new/", views.NotebookCreateView.as_view(), name="notebook_create"),
     path("notebooks/<int:pk>/delete/", views.NotebookDeleteView.as_view(), name="notebook_delete"),
+    path("notebooks/<int:pk>/edit/", views.NotebookUpdateView.as_view(), name="notebook_update"),
+
 
     # Календарь напоминаний
     path("calendar/", views.CalendarView.as_view(), name="calendar"),

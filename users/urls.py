@@ -3,7 +3,7 @@
 from django.urls import path
 
 from .views import (
-    TelegramSettingsView,
+    MaxSettingsView,
     UserLoginView,
     UserProfileView,
     UserRegistrationView,
@@ -18,6 +18,6 @@ urlpatterns = [
     path("register/", UserRegistrationView.as_view(), name="register"),
     path("logout/", user_logout_view, name="logout"),
     path("profile/", UserProfileView.as_view(), name="profile"),
-    path("telegram/", TelegramSettingsView.as_view(), name="telegram_settings"),
+    path("max/", MaxSettingsView.as_view(), name="max_settings"),
     path("email-confirm/<str:token>/", verify_email, name="verify_email"),
 ]

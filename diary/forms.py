@@ -1,9 +1,6 @@
 """Формы приложения diary."""
 import datetime
 
-from django import forms
-
-from .models import Entry, Notebook, Reminder
 
 
 from django import forms
@@ -12,43 +9,46 @@ from .models import Entry, Notebook, Reminder
 
 
 class NotebookForm(forms.ModelForm):
-    """Форма создания дневника (папки)."""
-
     class Meta:
         model = Notebook
-        fields = ["title"]
+        fields = ["title", "parent"]
         widgets = {
-            "title": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Название дневника",
-            }),
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Название папки"}),
+            "parent": forms.Select(attrs={"class": "form-select"}),
         }
-        labels = {"title": "Название"}
-        error_messages = {
-            "title": {
-                "unique": "Дневник с таким названием уже существует.",
-            },
+        labels = {
+            "title": "Название папки",
+            "parent": "Вложить в папку (необязательно)",
+        }
+        help_texts = {
+            "parent": "Оставьте пустым, чтобы создать корневую папку.",
         }
 
     def __init__(self, *args, **kwargs):
-        # author передаём из View, чтобы проверить уникальность в рамках пользователя
         self.author = kwargs.pop("author", None)
         super().__init__(*args, **kwargs)
 
+        if self.author:
+            # Показываем только папки этого пользователя
+            qs = Notebook.objects.filter(author=self.author)
+            # Если редактируем существующую папку, исключаем её саму и её потомков
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            self.fields["parent"].queryset = qs
+
+        self.fields["parent"].required = False
+
     def clean_title(self):
         title = self.cleaned_data["title"].strip()
-        if not title:
-            raise forms.ValidationError("Название не может быть пустым.")
+        parent = self.cleaned_data.get("parent")
 
-        if self.author is not None:
-            qs = Notebook.objects.filter(author=self.author, title__iexact=title)
-            # при редактировании исключаем самого себя
+        if self.author:
+            # Проверяем, нет ли уже папки с таким же названием в этой же родительской папке
+            qs = Notebook.objects.filter(author=self.author, title__iexact=title, parent=parent)
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
-                raise forms.ValidationError(
-                    "У вас уже есть дневник с таким названием."
-                )
+                raise forms.ValidationError("В этой папке уже есть подпапка с таким названием.")
         return title
 
 class EntryForm(forms.ModelForm):
@@ -75,7 +75,7 @@ class EntryForm(forms.ModelForm):
             "title": "Заголовок",
             "content": "Содержание",
             "notebook": "Дневник (папка)",
-            "reminder_at": "Напоминание (Telegram)",
+            "reminder_at": "Напоминание (Max)",
             "tags": "Теги",
         }
         help_texts = {

@@ -1,0 +1,38 @@
+{% for nb in notebooks %}
+    <li class="nb-tree-item">
+        <div class="nb-row" oncontextmenu="showContextMenu(event, {{ nb.id }}, '{{ nb.title|escapejs }}'); return false;">
+
+            {% if nb.has_children %}
+                <details class="nb-subdetails" {% if not close_all_notebooks %}open{% endif %}>
+                    <summary>
+                        <span class="nb-arrow"></span>
+                        <a href="{% url 'diary:entry_list' %}?notebook={{ nb.id }}"
+                           class="nb-link {% if request.GET.notebook == nb.id|stringformat:'s' %}active{% endif %}"
+                           onclick="event.stopPropagation();">
+                            📁 {{ nb.title }}
+                        </a>
+                        <div class="nb-actions" onclick="event.stopPropagation();">
+                            <a href="{% url 'diary:notebook_create' %}?parent={{ nb.id }}" class="nb-action" title="Создать подпапку">+</a>
+                        </div>
+                    </summary>
+
+                    <!-- Вложенные подпапки без лишних отступов -->
+                    <ul class="nb-sublist">
+                        {% include "diary/notebook_tree.html" with notebooks=nb.children_list %}
+                    </ul>
+                </details>
+            {% else %}
+                <div class="nb-spacer"></div>
+                <div class="nb-content">
+                    <a href="{% url 'diary:entry_list' %}?notebook={{ nb.id }}"
+                       class="nb-link {% if request.GET.notebook == nb.id|stringformat:'s' %}active{% endif %}">
+                        📁 {{ nb.title }}
+                    </a>
+                    <div class="nb-actions" onclick="event.stopPropagation();">
+                        <a href="{% url 'diary:notebook_create' %}?parent={{ nb.id }}" class="nb-action" title="Создать подпапку">+</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </li>
+{% endfor %}

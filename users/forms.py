@@ -7,7 +7,7 @@ from django.contrib.auth.forms import (
     UserCreationForm,
 )
 
-from .models import TelegramProfile, User
+from .models import User, MaxProfile
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -82,18 +82,16 @@ class UserProfileForm(forms.ModelForm):
         }
 
 
-class TelegramProfileForm(forms.ModelForm):
-    """Форма привязки Telegram chat_id."""
-
+class MaxProfileForm(forms.ModelForm):
+    """Форма привязки профиля MAX."""
     class Meta:
-        model = TelegramProfile
-        fields = ["chat_id"]
-        widgets = {"chat_id": forms.TextInput(attrs={"class": "form-control"})}
-        labels = {"chat_id": "Ваш Telegram chat_id"}
+        model = MaxProfile  # ← Заменили модель
+        fields = ["max_user_id"]  # ← Заменили поле
+        widgets = {"max_user_id": forms.TextInput(attrs={"class": "form-control"})}
+        labels = {"max_user_id": "Ваш ID в MAX"}
         help_texts = {
-            "chat_id": "Узнайте свой chat_id через @userinfobot и вставьте сюда.",
+            "max_user_id": "Укажите ваш ID пользователя в мессенджере MAX.",
         }
-
 
 class UserAdminCreationForm(UserCreationForm):
     """Форма создания пользователя в админке."""
