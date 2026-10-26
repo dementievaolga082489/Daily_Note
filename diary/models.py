@@ -80,7 +80,9 @@ class Entry(models.Model):
     title = models.CharField("Заголовок",
                              blank=True,
                              max_length=200)
-    content = models.TextField("Содержание")
+    content = models.TextField("Содержание",
+                               blank=True
+                               )
     date = models.DateField(
         "Дата записи",
         default=datetime.date.today,
@@ -103,6 +105,35 @@ class Entry(models.Model):
     def get_absolute_url(self) -> str:
         return reverse("diary:entry_detail", kwargs={"pk": self.pk})
 
+
+class Attachment(models.Model):
+    """Фото или видео, прикреплённые к записи."""
+
+    entry = models.ForeignKey(
+        Entry,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+        verbose_name="Запись",
+    )
+    file = models.FileField(
+        "Файл",
+        upload_to="attachments/%Y/%m/%d/",
+        help_text="Загрузите фото или видео."
+    )
+    is_video = models.BooleanField(
+        "Это видео",
+        default=False,
+        help_text="Поставьте галочку, если загружаете видео."
+    )
+    uploaded_at = models.DateTimeField("Загружено", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Вложение"
+        verbose_name_plural = "Вложения"
+
+    def __str__(self):
+        return f"Вложение для {self.entry.title or self.entry.date}"
+
 class Reminder(models.Model):
     """Напоминание в личном календаре."""
 
@@ -123,7 +154,7 @@ class Reminder(models.Model):
     )
     remind_at = models.DateTimeField(
         "Когда напомнить",
-        help_text="Дата и время отправки напоминания в Telegram.",
+        help_text="Дата и время отправки напоминания в Email.",
     )
     sent = models.BooleanField(
         "Отправлено", default=False,

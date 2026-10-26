@@ -4,13 +4,6 @@
 {% block content %}
     <div class="page-header">
         <div class="d-flex align-items-center gap-3">
-            {% if current_notebook %}
-                <!-- Кнопка назад, если мы внутри папки -->
-                <a href="{% url 'diary:entry_list' %}" class="btn-ghost" style="padding: 6px 12px; font-size: 16px;" title="Вернуться ко всем записям">
-                    ←
-                </a>
-            {% endif %}
-
             <h1 class="page-title m-0">
                 {% if current_notebook %}
                     📁 {{ current_notebook.title }}
@@ -20,7 +13,6 @@
             </h1>
         </div>
 
-        <!-- Если мы в Ежедневнике, подставляем его ID в ссылку создания -->
         <a href="{% url 'diary:entry_create' %}{% if current_notebook_id %}?notebook={{ current_notebook_id }}{% endif %}" class="btn-mint">
             + Создать запись
         </a>
@@ -34,30 +26,53 @@
         <div class="input-group" style="max-width: 420px;">
             <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Поиск по записям...">
             <button class="btn btn-outline-secondary" type="submit">Найти</button>
+            {% if query %}
+                <a href="?{% if current_notebook_id %}notebook={{ current_notebook_id }}{% endif %}" class="btn btn-outline-danger" title="Сбросить поиск">✕</a>
+            {% endif %}
         </div>
     </form>
 
-    <!-- Список записей строками -->
+    <!-- Блок подпапок (скрываем при поиске) -->
+    {% if child_notebooks and not query %}
+        <div class="child-notebooks mb-4">
+            <h5 class="text-muted mb-3" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Подпапки</h5>
+            <div class="row g-3">
+                {% for child in child_notebooks %}
+                    <div class="col-sm-6 col-md-4 col-lg-3">
+                        <a href="{% url 'diary:entry_list' %}?notebook={{ child.id }}" class="folder-card">
+                            <span style="font-size: 22px; margin-right: 8px;">📁</span>
+                            <span class="folder-title">{{ child.title }}</span>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Список записей -->
     {% if entries %}
         <div class="entry-list">
             {% for entry in entries %}
-                <div class="entry-row">
-                    <!-- Дата записи (из нового поля date) -->
-                    <div class="entry-date">{{ entry.date|date:"d.m.Y" }}</div>
-
-                    <!-- Заголовок со ссылкой -->
-                    <div class="entry-title">
-                        <a href="{{ entry.get_absolute_url }}">{{ entry.title }}</a>
+                <a href="{{ entry.get_absolute_url }}" class="entry-row-link">
+                    <div class="entry-row">
+                        <div class="entry-date">{{ entry.date|date:"d.m.Y" }}</div>
+                        <div class="entry-title">
+                            {{ entry.title|default:"Без названия" }}
+                        </div>
+                        {% if not current_notebook and entry.notebook %}
+                            <div class="entry-notebook">📁 {{ entry.notebook.title }}</div>
+                        {% endif %}
+                        <div class="entry-preview">
+                            {% if entry.content %}
+                                {{ entry.content|truncatewords:12 }}
+                            {% elif entry.attachments.all %}
+                                <em>📎 Медиафайлы</em>
+                            {% else %}
+                                <em>(пусто)</em>
+                            {% endif %}
+                        </div>
                     </div>
-
-                    <!-- Показываем папку, только если мы в общем списке -->
-                    {% if not current_notebook and entry.notebook %}
-                        <div class="entry-notebook">📁 {{ entry.notebook.title }}</div>
-                    {% endif %}
-
-                    <!-- Короткий текст записи -->
-                    <div class="entry-preview">{{ entry.content|truncatewords:12 }}</div>
-                </div>
+                </a>
             {% endfor %}
         </div>
 
@@ -83,33 +98,79 @@
         {% endif %}
 
     {% else %}
-        <p class="text-muted mt-4">
-            {% if current_notebook %}
-                В этом дневнике пока нет записей.
-            {% else %}
-                Записей пока нет. Создайте первую!
-            {% endif %}
-        </p>
+        <!-- Если поиск ничего не нашел -->
+        {% if query %}
+            <p class="text-muted mt-4">По запросу «{{ query }}» ничего не найдено.</p>
+        <!-- Если записей нет и подпапок нет -->
+        {% elif not child_notebooks %}
+            <p class="text-muted mt-4">
+                {% if current_notebook %}
+                    В этом дневнике пока нет записей.
+                {% else %}
+                    Записей пока нет. Создайте первую!
+                {% endif %}
+            </p>
+        {% endif %}
     {% endif %}
 
-    <!-- Стили для красивого отображения строк -->
     <style>
+        /* Стили для карточек подпапок */
+        .child-notebooks {
+            padding-bottom: 20px;
+            border-bottom: 1px dashed var(--border);
+        }
+        .folder-card {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--paper);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .folder-card:hover {
+            border-color: var(--accent);
+            background: var(--paper-2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            color: var(--text);
+        }
+        .folder-title {
+            font-weight: 600;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .entry-list {
             display: flex;
             flex-direction: column;
             border-top: 1px solid var(--border);
         }
+
+        .entry-row-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .entry-row-link:hover {
+            background: var(--paper-2);
+            color: inherit;
+        }
+
         .entry-row {
             display: flex;
             align-items: center;
             gap: 16px;
             padding: 14px 12px;
-            border-bottom: 1px solid var(--border);
-            transition: background 0.15s;
         }
-        .entry-row:hover {
-            background: var(--paper-2);
-        }
+
         .entry-date {
             font-weight: 600;
             color: var(--text-muted);
@@ -123,13 +184,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-        .entry-title a {
             color: var(--text);
-            text-decoration: none;
-        }
-        .entry-title a:hover {
-            color: var(--accent-hover);
         }
         .entry-notebook {
             font-size: 12px;
@@ -148,7 +203,6 @@
             text-overflow: ellipsis;
         }
 
-        /* На мобильных скрываем превью текста, чтобы не было каши */
         @media (max-width: 768px) {
             .entry-preview { display: none; }
             .entry-row { flex-wrap: wrap; gap: 8px; }

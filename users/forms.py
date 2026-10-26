@@ -7,7 +7,7 @@ from django.contrib.auth.forms import (
     UserCreationForm,
 )
 
-from .models import User, MaxProfile
+from .models import User
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -82,16 +82,6 @@ class UserProfileForm(forms.ModelForm):
         }
 
 
-class MaxProfileForm(forms.ModelForm):
-    """Форма привязки профиля MAX."""
-    class Meta:
-        model = MaxProfile  # ← Заменили модель
-        fields = ["max_user_id"]  # ← Заменили поле
-        widgets = {"max_user_id": forms.TextInput(attrs={"class": "form-control"})}
-        labels = {"max_user_id": "Ваш ID в MAX"}
-        help_texts = {
-            "max_user_id": "Укажите ваш ID пользователя в мессенджере MAX.",
-        }
 
 class UserAdminCreationForm(UserCreationForm):
     """Форма создания пользователя в админке."""

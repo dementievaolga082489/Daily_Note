@@ -8,7 +8,8 @@
         </h1>
     </div>
 
-    <form method="post" novalidate style="max-width: 860px;">
+    <!-- ★ Обязательно добавлен enctype для загрузки файлов -->
+    <form method="post" enctype="multipart/form-data" novalidate style="max-width: 860px;">
         {% csrf_token %}
 
         {% for field in form %}

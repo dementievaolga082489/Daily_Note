@@ -1,49 +1,34 @@
-"""Celery-задачи приложения diary (отправка в MAX)."""
+"""Celery-задачи приложения diary (отправка на Email)."""
 
-import requests
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from django.conf import settings
+from django.core.mail import send_mail
 from django.utils import timezone
 
 from diary.models import Entry, Reminder
-from users.models import MaxProfile
 
 logger = get_task_logger(__name__)
 
 
 @shared_task
-def send_max_message(max_user_id: str, text: str) -> bool:
-    """Отправляет текстовое сообщение в MAX (или имитирует отправку, если нет токена)."""
-
-    # ★ ЕСЛИ ТОКЕНА НЕТ — ИМИТИРУЕМ ОТПРАВКУ
-    if not settings.MAX_BOT_TOKEN:
-        logger.info("=" * 50)
-        logger.info("📨 [ИМИТАЦИЯ ОТПРАВКИ В MAX]")
-        logger.info("Кому (max_user_id): %s", max_user_id)
-        logger.info("Текст:\n%s", text)
-        logger.info("=" * 50)
-        return True  # Возвращаем True, чтобы задачи считали, что отправка успешна
-
-    # Если токен есть — реальный запрос к API MAX
-    url = f"{settings.MAX_API_URL}/messages"
-    headers = {
-        "Authorization": f"Bearer {settings.MAX_BOT_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "recipient": {"user_id": max_user_id},
-        "text": text
-    }
+def send_email_notification(to_email: str, subject: str, text: str) -> bool:
+    """Отправляет email-сообщение."""
+    if not to_email:
+        logger.warning("У пользователя не указан email — отправка невозможна")
+        return False
 
     try:
-        resp = requests.post(url, json=payload, headers=headers, timeout=10)
-        if resp.ok:
-            return True
-        logger.error("MAX API error: %s %s", resp.status_code, resp.text)
-        return False
-    except requests.RequestException as exc:
-        logger.exception("Ошибка при отправке в MAX: %s", exc)
+        send_mail(
+            subject=subject,
+            message=text,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[to_email],
+            fail_silently=False,
+        )
+        return True
+    except Exception as exc:
+        logger.exception("Ошибка при отправке email: %s", exc)
         return False
 
 
@@ -57,18 +42,26 @@ def check_and_send_entry_reminders() -> int:
 
     sent_count = 0
     for entry in entries:
-        profile = MaxProfile.objects.filter(user=entry.author).first()
-        if not profile or not profile.max_user_id:
+        if not entry.author.email:
             continue
 
-        text = f"🔔 *Напоминание (дневник)*\n\n*{entry.title or 'Без названия'}*\n\n{entry.content[:300]}"
+        subject = f"🔔 Напоминание: {entry.title or 'Запись в дневнике'}"
+        text = (
+            f"Привет, {entry.author.username}!\n\n"
+            f"Напоминание по записи:\n\n"
+            f"Заголовок: {entry.title or 'Без названия'}\n"
+            f"Дата: {entry.date}\n\n"
+            f"Содержание:\n{entry.content[:500]}\n\n"
+            f"---\n"
+            f"Это автоматическое сообщение, отвечать на него не нужно."
+        )
 
-        if send_max_message(profile.max_user_id, text):
+        if send_email_notification(entry.author.email, subject, text):
             entry.reminder_sent = True
             entry.save(update_fields=["reminder_sent"])
             sent_count += 1
 
-    logger.info("Entry-напоминаний обработано: %s", sent_count)
+    logger.info("Entry-напоминаний отправлено на email: %s", sent_count)
     return sent_count
 
 
@@ -82,16 +75,24 @@ def check_and_send_calendar_reminders() -> int:
 
     sent_count = 0
     for r in reminders:
-        profile = MaxProfile.objects.filter(user=r.author).first()
-        if not profile or not profile.max_user_id:
+        if not r.author.email:
             continue
 
-        text = f"📅 *Напоминание из календаря*\n\n*{r.title}*\n\n{r.description[:300]}"
+        subject = f"📅 Напоминание: {r.title}"
+        text = (
+            f"Привет, {r.author.username}!\n\n"
+            f"Напоминание из календаря:\n\n"
+            f"Событие: {r.title}\n"
+            f"Время: {r.remind_at.strftime('%d.%m.%Y %H:%M')}\n\n"
+            f"Описание:\n{r.description or 'Без описания'}\n\n"
+            f"---\n"
+            f"Это автоматическое сообщение, отвечать на него не нужно."
+        )
 
-        if send_max_message(profile.max_user_id, text):
+        if send_email_notification(r.author.email, subject, text):
             r.sent = True
             r.save(update_fields=["sent"])
             sent_count += 1
 
-    logger.info("Reminder-напоминаний обработано: %s", sent_count)
+    logger.info("Reminder-напоминаний отправлено на email: %s", sent_count)
     return sent_count

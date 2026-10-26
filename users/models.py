@@ -59,25 +59,3 @@ class User(AbstractUser):
         return self.get_full_name() or self.username
 
 
-class MaxProfile(models.Model):
-    """Привязка пользователя к MAX (мессенджер VK)."""
-
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="max_profile",
-        verbose_name="Пользователь",
-    )
-    max_user_id = models.CharField(
-        "ID пользователя в MAX",
-        max_length=64,
-        blank=True,
-        help_text="Ваш ID в MAX (можно узнать через бота).",
-    )
-
-    class Meta:
-        verbose_name = "Профиль MAX"
-        verbose_name_plural = "Профили MAX"
-
-    def __str__(self):
-        return f"{self.user.username} → {self.max_user_id or 'не привязан'}"

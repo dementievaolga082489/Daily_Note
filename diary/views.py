@@ -22,10 +22,9 @@ from django.views.generic import (
 )
 
 from .forms import EntryForm, NotebookForm, ReminderForm
-from .models import Entry, Notebook, Reminder
+from .models import Entry, Notebook, Reminder, Attachment  # ← Добавили Attachment
 from .permissions import OwnEntryRequiredMixin
 from .services import ensure_daily_notebook
-
 
 
 # ─── Вспомогательные функции ──────────────────────────────────────────────
@@ -38,13 +37,7 @@ def index(request):
 
 # ─── Entry ────────────────────────────────────────────────────────────────
 class EntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    """Список записей текущего пользователя.
-
-    Поддерживает:
-    - ?q=... — поиск по заголовку/содержанию;
-    - ?notebook=<id> — фильтр по дневнику (папке);
-    - пагинация по 10 записей.
-    """
+    """Список записей текущего пользователя."""
 
     model = Entry
     template_name = "diary/entry_list.html"
@@ -62,16 +55,40 @@ class EntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         qs = (
             Entry.objects.filter(author=self.request.user)
             .select_related("notebook")
-            .prefetch_related("tags")
+            .prefetch_related("tags", "attachments")
         )
 
-        # Фильтр по дневнику (папке)
         notebook_id = self.request.GET.get("notebook", "").strip()
-        if notebook_id.isdigit():
-            qs = qs.filter(notebook_id=int(notebook_id))
-
-        # Поиск по заголовку/содержимому
         query = self.request.GET.get("q", "").strip()
+
+        if notebook_id.isdigit():
+            # Если есть поисковый запрос, ищем во вложенных папках
+            if query:
+                from .models import Notebook
+                try:
+                    current_nb = Notebook.objects.get(pk=int(notebook_id), author=self.request.user)
+                except Notebook.DoesNotExist:
+                    current_nb = None
+
+                if current_nb:
+                    nb_ids = [current_nb.id]
+                    children = list(Notebook.objects.filter(author=self.request.user))
+
+                    def get_descendants(parent_id):
+                        found = []
+                        for child in children:
+                            if child.parent_id == parent_id:
+                                found.append(child.id)
+                                found.extend(get_descendants(child.id))
+                        return found
+
+                    nb_ids.extend(get_descendants(current_nb.id))
+                    qs = qs.filter(notebook_id__in=nb_ids)
+            else:
+                # Если поиска нет, показываем ТОЛЬКО записи этой папки
+                qs = qs.filter(notebook_id=int(notebook_id))
+
+        # Фильтр по слову
         if query:
             qs = qs.filter(Q(title__icontains=query) | Q(content__icontains=query))
 
@@ -82,17 +99,31 @@ class EntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
         notebooks = Notebook.objects.filter(author=self.request.user)
         current_notebook_id = self.request.GET.get("notebook", "").strip()
+        query = self.request.GET.get("q", "").strip()  # Получаем поисковый запрос
 
-        ctx["query"] = self.request.GET.get("q", "")
+        current_notebook = None
+        child_notebooks = []
+
+        if current_notebook_id.isdigit():
+            current_notebook = notebooks.filter(pk=int(current_notebook_id)).first()
+            if current_notebook:
+                child_notebooks = Notebook.objects.filter(
+                    author=self.request.user,
+                    parent=current_notebook
+                ).order_by("title")
+
+        ctx["query"] = query
         ctx["notebooks"] = notebooks
         ctx["current_notebook_id"] = current_notebook_id
-        ctx["current_notebook"] = (
-            notebooks.filter(pk=int(current_notebook_id)).first()
-            if current_notebook_id.isdigit()
-            else None
-        )
-        return ctx
+        ctx["current_notebook"] = current_notebook
 
+        # ★ Передаем подпапки ТОЛЬКО если нет поиска
+        if not query:
+            ctx["child_notebooks"] = child_notebooks
+        else:
+            ctx["child_notebooks"] = []
+
+        return ctx
 
 class EntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """Создание записи."""
@@ -131,8 +162,20 @@ class EntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
+        response = super().form_valid(form)
+
+        # ★ Обработка загруженных файлов (фото/видео)
+        files = self.request.FILES.getlist('attachments')
+        for f in files:
+            is_video = f.content_type.startswith('video/')
+            Attachment.objects.create(
+                entry=self.object,
+                file=f,
+                is_video=is_video
+            )
+
         messages.success(self.request, "Запись создана.")
-        return super().form_valid(form)
+        return response
 
 
 class EntryDetailView(OwnEntryRequiredMixin, DetailView):
@@ -159,8 +202,20 @@ class EntryUpdateView(OwnEntryRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         form.instance.reminder_sent = False
+        response = super().form_valid(form)
+
+        # ★ Обработка загруженных файлов (фото/видео) при редактировании
+        files = self.request.FILES.getlist('attachments')
+        for f in files:
+            is_video = f.content_type.startswith('video/')
+            Attachment.objects.create(
+                entry=self.object,
+                file=f,
+                is_video=is_video
+            )
+
         messages.success(self.request, "Запись обновлена.")
-        return super().form_valid(form)
+        return response
 
 
 class EntryDeleteView(OwnEntryRequiredMixin, DeleteView):

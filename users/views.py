@@ -17,12 +17,11 @@ from django.contrib.auth.models import Permission
 
 
 from .forms import (
-    MaxProfileForm,
     UserLoginForm,
     UserProfileForm,
     UserRegistrationForm,
 )
-from .models import MaxProfile, User
+from .models import User
 
 
 class UserRegistrationView(FormView):
@@ -42,8 +41,6 @@ class UserRegistrationView(FormView):
         perms = Permission.objects.filter(content_type__app_label="diary")
         user.user_permissions.add(*perms)
 
-        # Явное создание профиля (без сигналов).
-        MaxProfile.objects.get_or_create(user=user)
 
         confirm_url = self.request.build_absolute_uri(
             reverse("users:verify_email", kwargs={"token": token})
@@ -113,8 +110,6 @@ class UserProfileView(LoginRequiredMixin, View):
     template_name = "users/profile.html"
 
     def get(self, request):
-        # Гарантируем наличие MaxProfile.
-        MaxProfile.objects.get_or_create(user=request.user)
         form = UserProfileForm(instance=request.user)
         return render(request, self.template_name, {"form": form})
 
@@ -127,20 +122,3 @@ class UserProfileView(LoginRequiredMixin, View):
         return render(request, self.template_name, {"form": form})
 
 
-class MaxSettingsView(LoginRequiredMixin, View):
-    """Отдельная страница привязки ID в MAX."""
-    template_name = "users/max_settings.html"  # (можете переименовать шаблон позже)
-
-    def get(self, request):
-        profile_obj, _ = MaxProfile.objects.get_or_create(user=request.user)
-        form = MaxProfileForm(instance=profile_obj)
-        return render(request, self.template_name, {"form": form})
-
-    def post(self, request):
-        profile_obj, _ = MaxProfile.objects.get_or_create(user=request.user)
-        form = MaxProfileForm(request.POST, instance=profile_obj)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "ID в MAX сохранён.")
-            return redirect("users:max_settings") # или users:max_settings
-        return render(request, self.template_name, {"form": form})

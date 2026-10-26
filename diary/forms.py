@@ -6,6 +6,32 @@ import datetime
 from django import forms
 
 from .models import Entry, Notebook, Reminder
+from django.forms.widgets import FileInput
+
+class MultipleFileInput(FileInput):
+    """Виджет для загрузки нескольких файлов."""
+    allow_multiple_selected = True
+
+    def __init__(self, attrs=None):
+        # Убираем 'multiple' из attrs, чтобы Django не ругался
+        attrs = attrs or {}
+        attrs.pop('multiple', None)
+        super().__init__(attrs)
+        self.attrs['multiple'] = True
+
+# 2. Кастомное поле для МНОЖЕСТВЕННЫХ файлов
+class MultipleFileField(forms.FileField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            result = [single_file_clean(d, initial) for d in data]
+        else:
+            result = single_file_clean(data, initial)
+        return result
 
 
 class NotebookForm(forms.ModelForm):
@@ -54,6 +80,12 @@ class NotebookForm(forms.ModelForm):
 class EntryForm(forms.ModelForm):
     """Форма создания и редактирования записи дневника."""
 
+    attachments = MultipleFileField(
+        required=False,
+        label="Добавить фото/видео",
+        help_text="Можно выбрать сразу несколько файлов."
+    )
+
     class Meta:
         model = Entry
         fields = ["date", "title", "content", "notebook", "reminder_at", "tags"]
@@ -75,7 +107,7 @@ class EntryForm(forms.ModelForm):
             "title": "Заголовок",
             "content": "Содержание",
             "notebook": "Дневник (папка)",
-            "reminder_at": "Напоминание (Max)",
+            "reminder_at": "Напоминание (Email)",
             "tags": "Теги",
         }
         help_texts = {
@@ -90,6 +122,7 @@ class EntryForm(forms.ModelForm):
         # Делаем поля необязательными в HTML
         self.fields["date"].required = False
         self.fields["title"].required = False
+        self.fields["content"].required = False
         self.fields["notebook"].required = False
 
         # Показываем в выпадающем списке только дневники текущего пользователя

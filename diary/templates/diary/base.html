@@ -58,7 +58,7 @@
             padding: 24px 18px;
             display: flex; flex-direction: column; gap: 20px;
             position: sticky; top: 61px; height: calc(100vh - 61px);
-            box-sizing: border-box; overflow-y: auto; overflow-x: hidden; /* Скрываем горизонтальный скролл */
+            box-sizing: border-box; overflow-y: auto; overflow-x: hidden;
         }
 
         .side-nav { display: flex; flex-direction: column; gap: 4px; }
@@ -74,11 +74,10 @@
         .side-add, .side-collapse { font-size: 18px; line-height: 1; color: var(--accent-hover); text-decoration: none; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: background .15s; cursor: pointer; }
         .side-add:hover, .side-collapse:hover { background: var(--accent-soft); }
 
-        /* ─── ДЕРЕВО ПАПОК (ИСПРАВЛЕННЫЕ ОТСТУПЫ) ─── */
+        /* ─── ДЕРЕВО ПАПОК ─── */
         .nb-tree-container { font-size: 14px; width: 100%; }
         .nb-sublist { list-style: none; padding: 0; margin: 0; }
 
-        /* Отступ делаем только для вложенных UL, убираем border, чтобы не было съездов */
         .nb-subdetails > .nb-sublist {
             padding-left: 14px;
             margin-left: 9px;
@@ -109,6 +108,7 @@
         }
         .nb-subdetails > summary::-webkit-details-marker { display: none; }
 
+        /* ★ Возвращаем стрелочку */
         .nb-arrow {
             width: 20px;
             text-align: center;
@@ -310,7 +310,7 @@
     const ctxEdit = document.getElementById('ctxEdit');
     const ctxDelete = document.getElementById('ctxDelete');
 
-    // Функция вызова меню
+    // Функция вызова меню по правому клику
     function showContextMenu(e, notebookId, notebookTitle) {
         e.preventDefault();
         e.stopPropagation();
@@ -321,8 +321,8 @@
         contextMenu.style.display = 'block';
 
         // Настраиваем ссылки
-        ctxEdit.href = `/notebooks/${notebookId}/edit/`; // Ссылка на редактирование
-        ctxDelete.href = `/notebooks/${notebookId}/delete/`; // Ссылка на удаление
+        ctxEdit.href = `/notebooks/${notebookId}/edit/`;
+        ctxDelete.href = `/notebooks/${notebookId}/delete/`;
     }
 
     // Скрываем меню при клике в любом другом месте

@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 from .forms import UserAdminChangeForm, UserAdminCreationForm
-from .models import User, MaxProfile
+from .models import User
 
 
 @admin.register(User)
@@ -26,8 +26,3 @@ class CustomUserAdmin(UserAdmin):
         }),
     )
 
-
-@admin.register(MaxProfile)
-class MaxProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "max_user_id")
-    search_fields = ("user__username", "max_user_id")
