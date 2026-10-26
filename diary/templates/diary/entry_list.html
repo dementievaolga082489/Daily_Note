@@ -1,5 +1,13 @@
 {% extends "diary/base.html" %}
-{% block title %}{% if current_notebook %}{{ current_notebook.title }}{% else %}Мой дневник{% endif %}{% endblock %}
+{% block title %}
+    {% if current_notebook %}
+        {{ current_notebook.title }}
+    {% elif query or tag_query or date_from or date_to %}
+        Результаты поиска
+    {% else %}
+        Все записи
+    {% endif %}
+{% endblock %}
 
 {% block content %}
     <div class="page-header">
@@ -7,8 +15,10 @@
             <h1 class="page-title m-0">
                 {% if current_notebook %}
                     📁 {{ current_notebook.title }}
+                {% elif query or tag_query or date_from or date_to %}
+                    Результаты поиска
                 {% else %}
-                    Мой дневник
+                    Все записи
                 {% endif %}
             </h1>
         </div>
@@ -18,28 +28,17 @@
         </a>
     </div>
 
-    <!-- Строка поиска -->
-    <form method="get" class="mb-4">
-        {% if current_notebook_id %}
-            <input type="hidden" name="notebook" value="{{ current_notebook_id }}">
-        {% endif %}
-        <div class="input-group" style="max-width: 420px;">
-            <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Поиск по записям...">
-            <button class="btn btn-outline-secondary" type="submit">Найти</button>
-            {% if query %}
-                <a href="?{% if current_notebook_id %}notebook={{ current_notebook_id }}{% endif %}" class="btn btn-outline-danger" title="Сбросить поиск">✕</a>
-            {% endif %}
-        </div>
-    </form>
-
-    <!-- Блок подпапок (скрываем при поиске) -->
-    {% if child_notebooks and not query %}
+    <!-- Блок папок (скрываем при поиске) -->
+    {% if child_notebooks and not query and not tag_query and not date_from and not date_to %}
         <div class="child-notebooks mb-4">
-            <h5 class="text-muted mb-3" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Подпапки</h5>
+            <h5 class="text-muted mb-3" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+                {% if current_notebook %}Подпапки{% else %}Мои папки{% endif %}
+            </h5>
             <div class="row g-3">
                 {% for child in child_notebooks %}
                     <div class="col-sm-6 col-md-4 col-lg-3">
-                        <a href="{% url 'diary:entry_list' %}?notebook={{ child.id }}" class="folder-card">
+                        <a href="{% url 'diary:entry_list' %}?notebook={{ child.id }}" class="folder-card"
+                           oncontextmenu="showContextMenu(event, 'folder', {{ child.id }});">
                             <span style="font-size: 22px; margin-right: 8px;">📁</span>
                             <span class="folder-title">{{ child.title }}</span>
                         </a>
@@ -53,7 +52,8 @@
     {% if entries %}
         <div class="entry-list">
             {% for entry in entries %}
-                <a href="{{ entry.get_absolute_url }}" class="entry-row-link">
+                <a href="{{ entry.get_absolute_url }}" class="entry-row-link"
+                   oncontextmenu="showContextMenu(event, 'entry', {{ entry.id }});">
                     <div class="entry-row">
                         <div class="entry-date">{{ entry.date|date:"d.m.Y" }}</div>
                         <div class="entry-title">
@@ -99,9 +99,9 @@
 
     {% else %}
         <!-- Если поиск ничего не нашел -->
-        {% if query %}
-            <p class="text-muted mt-4">По запросу «{{ query }}» ничего не найдено.</p>
-        <!-- Если записей нет и подпапок нет -->
+        {% if query or tag_query or date_from or date_to %}
+            <p class="text-muted mt-4">По вашему запросу ничего не найдено.</p>
+        <!-- Если записей нет и папок нет -->
         {% elif not child_notebooks %}
             <p class="text-muted mt-4">
                 {% if current_notebook %}
@@ -114,7 +114,7 @@
     {% endif %}
 
     <style>
-        /* Стили для карточек подпапок */
+        /* Стили для карточек папок */
         .child-notebooks {
             padding-bottom: 20px;
             border-bottom: 1px dashed var(--border);

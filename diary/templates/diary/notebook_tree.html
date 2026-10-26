@@ -1,12 +1,10 @@
 {% for nb in notebooks %}
     <li class="nb-tree-item">
-        <!-- ★ Добавил oncontextmenu для правого клика -->
-        <div class="nb-row" oncontextmenu="showContextMenu(event, {{ nb.id }}, '{{ nb.title|escapejs }}'); return false;">
+        <div class="nb-row" oncontextmenu="showContextMenu(event, 'folder', {{ nb.id }}); return false;">
 
             {% if nb.has_children %}
-                <details class="nb-subdetails" {% if not close_all_notebooks %}open{% endif %}>
+                <details class="nb-subdetails" id="folder-{{ nb.id }}" {% if not close_all_notebooks %}open{% endif %}>
                     <summary>
-                        <!-- ★ Вот эта стрелочка -->
                         <span class="nb-arrow"></span>
 
                         <a href="{% url 'diary:entry_list' %}?notebook={{ nb.id }}"

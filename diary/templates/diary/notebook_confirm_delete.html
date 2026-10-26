@@ -5,13 +5,26 @@
     <div class="page-header">
         <h1 class="page-title">Удалить дневник?</h1>
     </div>
-    <p>
-        Удалить папку «<strong>{{ object.title }}</strong>»?
-        Записи внутри не останутся привязанными к папке, но <strong>не удалятся</strong>.
-    </p>
-    <form method="post" class="mt-4">
+
+    <div class="card p-4 mb-4" style="background: var(--paper); border: 1px solid var(--border); border-radius: 10px; max-width: 600px;">
+        <p class="mb-2">
+            Вы уверены, что хотите удалить папку «<strong>{{ object.title }}</strong>»?
+        </p>
+        <p class="text-muted small mb-0">
+            <em>Все записи и вложенные подпапки внутри этой папки также будут удалены. Это действие необратимо.</em>
+        </p>
+    </div>
+
+    <form method="post">
         {% csrf_token %}
-        <button type="submit" class="btn-mint" style="background:#c98b8b;color:#fff;">Удалить</button>
-        <a href="{% url 'diary:entry_list' %}" class="btn-ghost">Отмена</a>
+        <!-- ★ Скрытое поле для возврата на предыдущую страницу -->
+        <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger rounded-pill" style="background-color: #c98b8b; border: none;">Удалить</button>
+            <a href="{% if object.parent %}{% url 'diary:entry_list' %}?notebook={{ object.parent.id }}{% else %}{% url 'diary:entry_list' %}{% endif %}" class="btn btn-outline-secondary rounded-pill">
+                Отмена
+            </a>
+        </div>
     </form>
 {% endblock %}

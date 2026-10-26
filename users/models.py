@@ -57,5 +57,3 @@ class User(AbstractUser):
     @property
     def full_name(self) -> str:
         return self.get_full_name() or self.username
-
-

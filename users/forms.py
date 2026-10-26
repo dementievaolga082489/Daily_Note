@@ -40,9 +40,7 @@ class UserLoginForm(AuthenticationForm):
 
     username = forms.EmailField(
         label="Email",
-        widget=forms.EmailInput(
-            attrs={"class": "form-control", "autofocus": True}
-        ),
+        widget=forms.EmailInput(attrs={"class": "form-control", "autofocus": True}),
     )
     password = forms.CharField(
         label="Пароль",
@@ -56,8 +54,7 @@ class UserLoginForm(AuthenticationForm):
             user = User.objects.filter(email=email).first()
             if user and not user.email_verified:
                 raise forms.ValidationError(
-                    "Email не подтверждён. Проверьте почту или "
-                    "запросите повторную отправку письма."
+                    "Email не подтверждён. Проверьте почту или " "запросите повторную отправку письма."
                 )
         return cleaned
 
@@ -68,8 +65,13 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = User
         fields = [
-            "username", "email", "first_name", "last_name",
-            "phone", "description", "avatar",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "phone",
+            "description",
+            "avatar",
         ]
         widgets = {
             "username": forms.TextInput(attrs={"class": "form-control"}),
@@ -80,7 +82,6 @@ class UserProfileForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "avatar": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
-
 
 
 class UserAdminCreationForm(UserCreationForm):

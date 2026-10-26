@@ -43,6 +43,4 @@ class Command(BaseCommand):
         user.save()
 
         status = "✅ создан" if created else "♻️  обновлён"
-        self.stdout.write(self.style.SUCCESS(
-            f"{status}: {email} (username={user.username}, password={password})"
-        ))
+        self.stdout.write(self.style.SUCCESS(f"{status}: {email} (username={user.username}, password={password})"))

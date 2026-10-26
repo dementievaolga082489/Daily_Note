@@ -5,10 +5,11 @@ Reminder — отдельное напоминание для календаря
 Tag — тег для записи.
 """
 
+import datetime
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
-import datetime
 
 
 class Tag(models.Model):
@@ -27,6 +28,7 @@ class Tag(models.Model):
 
 class Notebook(models.Model):
     """Дневник (папка) пользователя."""
+
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -43,7 +45,7 @@ class Notebook(models.Model):
         blank=True,
         related_name="children",
         verbose_name="Родительская папка",
-        help_text="Оставьте пустым, если это корневая папка."
+        help_text="Оставьте пустым, если это корневая папка.",
     )
 
     created_at = models.DateTimeField("Создан", auto_now_add=True)
@@ -63,6 +65,7 @@ class Notebook(models.Model):
     def __str__(self) -> str:
         return self.title
 
+
 class Entry(models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -73,21 +76,14 @@ class Entry(models.Model):
     notebook = models.ForeignKey(
         Notebook,
         on_delete=models.SET_NULL,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         related_name="entries",
         verbose_name="Дневник",
     )
-    title = models.CharField("Заголовок",
-                             blank=True,
-                             max_length=200)
-    content = models.TextField("Содержание",
-                               blank=True
-                               )
-    date = models.DateField(
-        "Дата записи",
-        default=datetime.date.today,
-        help_text="По умолчанию — сегодняшняя дата."
-    )
+    title = models.CharField("Заголовок", blank=True, max_length=200)
+    content = models.TextField("Содержание", blank=True)
+    date = models.DateField("Дата записи", default=datetime.date.today, help_text="По умолчанию — сегодняшняя дата.")
     tags = models.ManyToManyField(Tag, blank=True, related_name="entries", verbose_name="Теги")
     reminder_at = models.DateTimeField("Напомнить в", null=True, blank=True)
     reminder_sent = models.BooleanField("Напоминание отправлено", default=False)
@@ -115,16 +111,9 @@ class Attachment(models.Model):
         related_name="attachments",
         verbose_name="Запись",
     )
-    file = models.FileField(
-        "Файл",
-        upload_to="attachments/%Y/%m/%d/",
-        help_text="Загрузите фото или видео."
-    )
-    is_video = models.BooleanField(
-        "Это видео",
-        default=False,
-        help_text="Поставьте галочку, если загружаете видео."
-    )
+    file = models.FileField("Файл", upload_to="attachments/%Y/%m/%d/", help_text="Загрузите фото или видео.")
+    is_video = models.BooleanField("Это видео", default=False, help_text="Поставьте галочку, если загружаете видео.")
+    is_drawing = models.BooleanField("Это рисунок", default=False)
     uploaded_at = models.DateTimeField("Загружено", auto_now_add=True)
 
     class Meta:
@@ -133,6 +122,7 @@ class Attachment(models.Model):
 
     def __str__(self):
         return f"Вложение для {self.entry.title or self.entry.date}"
+
 
 class Reminder(models.Model):
     """Напоминание в личном календаре."""
@@ -145,11 +135,13 @@ class Reminder(models.Model):
         help_text="Пользователь, которому принадлежит напоминание.",
     )
     title = models.CharField(
-        "Название", max_length=200,
+        "Название",
+        max_length=200,
         help_text="Краткое название события.",
     )
     description = models.TextField(
-        "Описание", blank=True,
+        "Описание",
+        blank=True,
         help_text="Дополнительные детали (необязательно).",
     )
     remind_at = models.DateTimeField(
@@ -157,11 +149,13 @@ class Reminder(models.Model):
         help_text="Дата и время отправки напоминания в Email.",
     )
     sent = models.BooleanField(
-        "Отправлено", default=False,
+        "Отправлено",
+        default=False,
         help_text="Флаг ставится Celery-задачей после успешной отправки.",
     )
     created_at = models.DateTimeField(
-        "Создано", auto_now_add=True,
+        "Создано",
+        auto_now_add=True,
         help_text="Дата и время создания напоминания.",
     )
 
@@ -182,4 +176,3 @@ class Reminder(models.Model):
             "diary:by_date",
             kwargs={"date": self.remind_at.date().isoformat()},
         )
-

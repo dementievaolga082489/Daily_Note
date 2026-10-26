@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Permission
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
 from django.http import Http404
@@ -13,8 +14,6 @@ from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import FormView
-from django.contrib.auth.models import Permission
-
 
 from .forms import (
     UserLoginForm,
@@ -41,10 +40,7 @@ class UserRegistrationView(FormView):
         perms = Permission.objects.filter(content_type__app_label="diary")
         user.user_permissions.add(*perms)
 
-
-        confirm_url = self.request.build_absolute_uri(
-            reverse("users:verify_email", kwargs={"token": token})
-        )
+        confirm_url = self.request.build_absolute_uri(reverse("users:verify_email", kwargs={"token": token}))
 
         send_mail(
             subject="Подтверждение почты",
@@ -78,11 +74,13 @@ def verify_email(request, token):
     user.is_active = True
     user.email_verified = True
     user.email_verification_token = ""
-    user.save(update_fields=[
-        "is_active",
-        "email_verified",
-        "email_verification_token",
-    ])
+    user.save(
+        update_fields=[
+            "is_active",
+            "email_verified",
+            "email_verification_token",
+        ]
+    )
 
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     messages.success(request, "Email подтверждён. Добро пожаловать!")
@@ -120,5 +118,3 @@ class UserProfileView(LoginRequiredMixin, View):
             messages.success(request, "Профиль обновлён.")
             return redirect("users:profile")
         return render(request, self.template_name, {"form": form})
-
-

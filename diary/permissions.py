@@ -1,6 +1,7 @@
 """Миксины прав доступа для приложения diary."""
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.exceptions import PermissionDenied
 
 
 class OwnEntryRequiredMixin(LoginRequiredMixin, PermissionRequiredMixin):
@@ -13,7 +14,11 @@ class OwnEntryRequiredMixin(LoginRequiredMixin, PermissionRequiredMixin):
         return (self.required_permission,)
 
     def has_permission(self) -> bool:
-        return (
-            super().has_permission()
-            and self.get_object().author == self.request.user
-        )
+        # Проверяем только общие права, без get_object()
+        return super().has_permission()
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        if obj.author != self.request.user:
+            raise PermissionDenied("Вы не можете управлять чужой записью.")
+        return obj

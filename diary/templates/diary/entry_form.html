@@ -8,9 +8,11 @@
         </h1>
     </div>
 
-    <!-- ★ Обязательно добавлен enctype для загрузки файлов -->
     <form method="post" enctype="multipart/form-data" novalidate style="max-width: 860px;">
         {% csrf_token %}
+
+        <!-- Скрытое поле для возврата на предыдущую страницу -->
+        <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
 
         {% for field in form %}
             <div class="mb-3">
@@ -25,9 +27,161 @@
             </div>
         {% endfor %}
 
+        <!-- Блок для рисования -->
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Рисунок</label>
+            <div style="border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px; background: #fff;">
+                <input type="hidden" name="drawing_data" id="drawingData">
+
+                {% if object %}
+                    {% for att in object.attachments.all %}
+                        {% if att.is_drawing %}
+                            <input type="hidden" name="old_drawing_id" id="oldDrawingId" value="{{ att.id }}">
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                <canvas id="drawingCanvas" width="600" height="400" style="border: 1px solid #ccc; touch-action: none; display: block; max-width: 100%; background: #ffffff;"></canvas>
+
+                <div class="mt-2 d-flex gap-3 align-items-center flex-wrap">
+                    <button type="button" id="clearCanvas" class="btn btn-outline-secondary btn-sm">Очистить всё</button>
+                    <button type="button" id="eraserBtn" class="btn btn-outline-secondary btn-sm">Ластик</button>
+                    <div class="d-flex align-items-center gap-1">
+                        <span style="font-size: 14px;">Цвет:</span>
+                        <input type="color" id="brushColor" value="#000000" style="width: 32px; height: 32px; padding: 0; border: none; cursor: pointer;" title="Цвет кисти">
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <span style="font-size: 14px;">Толщина:</span>
+                        <input type="range" id="brushSize" min="1" max="50" value="3" style="width: 100px;" title="Толщина кисти/ластика">
+                        <span id="brushSizeValue" style="font-size: 14px; width: 20px; text-align: center; font-weight: 600;">3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn-mint">Сохранить</button>
+            <button type="submit" id="submitBtn" class="btn-mint">Сохранить</button>
             <a href="{% url 'diary:entry_list' %}" class="btn-ghost">Отмена</a>
         </div>
     </form>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const canvas = document.getElementById("drawingCanvas");
+            const ctx = canvas.getContext("2d");
+            const clearBtn = document.getElementById("clearCanvas");
+            const eraserBtn = document.getElementById("eraserBtn");
+            const drawingDataInput = document.getElementById("drawingData");
+            const colorInput = document.getElementById("brushColor");
+            const sizeInput = document.getElementById("brushSize");
+            const sizeValue = document.getElementById("brushSizeValue");
+            const form = canvas.closest("form");
+            const submitBtn = document.getElementById("submitBtn");
+
+            let isDrawing = false;
+            let lastX = 0;
+            let lastY = 0;
+            let isEraser = false;
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const oldDrawingId = document.getElementById("oldDrawingId");
+            if (oldDrawingId) {
+                {% if object %}
+                    {% for att in object.attachments.all %}
+                        {% if att.is_drawing %}
+                            const imgUrl = "{{ att.file.url }}";
+                            const img = new Image();
+                            img.onload = function() {
+                                ctx.drawImage(img, 0, 0);
+                            };
+                            img.src = imgUrl;
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            }
+
+            function updateBrushStyle() {
+                if (isEraser) {
+                    ctx.strokeStyle = "#ffffff";
+                    canvas.style.cursor = "cell";
+                } else {
+                    ctx.strokeStyle = colorInput.value;
+                    canvas.style.cursor = "crosshair";
+                }
+                ctx.lineWidth = sizeInput.value;
+                sizeValue.textContent = sizeInput.value;
+            }
+
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            updateBrushStyle();
+
+            colorInput.addEventListener("change", () => {
+                if (isEraser) {
+                    isEraser = false;
+                    eraserBtn.classList.remove("btn-dark");
+                    eraserBtn.classList.add("btn-outline-secondary");
+                }
+                updateBrushStyle();
+            });
+
+            sizeInput.addEventListener("input", updateBrushStyle);
+
+            eraserBtn.addEventListener("click", () => {
+                isEraser = !isEraser;
+                if (isEraser) {
+                    eraserBtn.classList.remove("btn-outline-secondary");
+                    eraserBtn.classList.add("btn-dark");
+                } else {
+                    eraserBtn.classList.remove("btn-dark");
+                    eraserBtn.classList.add("btn-outline-secondary");
+                }
+                updateBrushStyle();
+            });
+
+            canvas.addEventListener("mousedown", (e) => {
+                isDrawing = true;
+                [lastX, lastY] = [e.offsetX, e.offsetY];
+            });
+
+            canvas.addEventListener("mousemove", (e) => {
+                if (!isDrawing) return;
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.stroke();
+                [lastX, lastY] = [e.offsetX, e.offsetY];
+            });
+
+            canvas.addEventListener("mouseup", () => isDrawing = false);
+            canvas.addEventListener("mouseout", () => isDrawing = false);
+
+            clearBtn.addEventListener("click", () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                updateBrushStyle();
+            });
+
+            if (form) {
+                form.addEventListener("submit", function(e) {
+                    // 1. Сохраняем рисунок в скрытое поле
+                    const dataURL = canvas.toDataURL("image/png");
+                    if (dataURL !== "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==") {
+                        drawingDataInput.value = dataURL;
+                    }
+
+                    // 2. Блокируем кнопку, чтобы избежать двойной отправки
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+                        submitBtn.style.opacity = '0.7';
+                        submitBtn.style.cursor = 'not-allowed';
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock %}

@@ -1,25 +1,26 @@
 """Формы приложения diary."""
+
 import datetime
 
-
-
 from django import forms
-
-from .models import Entry, Notebook, Reminder
 from django.forms.widgets import FileInput
+
+from .models import Entry, Notebook, Reminder, Tag  # ★ Добавили импорт Tag
+
 
 class MultipleFileInput(FileInput):
     """Виджет для загрузки нескольких файлов."""
+
     allow_multiple_selected = True
 
     def __init__(self, attrs=None):
         # Убираем 'multiple' из attrs, чтобы Django не ругался
         attrs = attrs or {}
-        attrs.pop('multiple', None)
+        attrs.pop("multiple", None)
         super().__init__(attrs)
-        self.attrs['multiple'] = True
+        self.attrs["multiple"] = True
 
-# 2. Кастомное поле для МНОЖЕСТВЕННЫХ файлов
+
 class MultipleFileField(forms.FileField):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("widget", MultipleFileInput())
@@ -77,22 +78,31 @@ class NotebookForm(forms.ModelForm):
                 raise forms.ValidationError("В этой папке уже есть подпапка с таким названием.")
         return title
 
+
 class EntryForm(forms.ModelForm):
     """Форма создания и редактирования записи дневника."""
 
     attachments = MultipleFileField(
+        required=False, label="Добавить фото/видео", help_text="Можно выбрать сразу несколько файлов."
+    )
+
+    tags_input = forms.CharField(
         required=False,
-        label="Добавить фото/видео",
-        help_text="Можно выбрать сразу несколько файлов."
+        label="Теги",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Введите теги через запятую (например: спорт, утро)",
+            }
+        ),
+        help_text="Разделяйте теги запятыми.",
     )
 
     class Meta:
         model = Entry
-        fields = ["date", "title", "content", "notebook", "reminder_at", "tags"]
+        fields = ["date", "title", "content", "notebook", "reminder_at"]  # ★ Убрали "tags" из fields
         widgets = {
-            "date": forms.DateInput(
-                attrs={"class": "form-control", "type": "date"},
-                format="%Y-%m-%d"  ),
+            "date": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
             "title": forms.TextInput(attrs={"class": "form-control"}),
             "content": forms.Textarea(attrs={"class": "form-control", "rows": 6}),
             "notebook": forms.Select(attrs={"class": "form-select"}),
@@ -100,7 +110,6 @@ class EntryForm(forms.ModelForm):
                 attrs={"class": "form-control", "type": "datetime-local"},
                 format="%Y-%m-%dT%H:%M",
             ),
-            "tags": forms.CheckboxSelectMultiple(),
         }
         labels = {
             "date": "Дата",
@@ -108,7 +117,6 @@ class EntryForm(forms.ModelForm):
             "content": "Содержание",
             "notebook": "Дневник (папка)",
             "reminder_at": "Напоминание (Email)",
-            "tags": "Теги",
         }
         help_texts = {
             "reminder_at": "Оставьте пустым, если напоминание не нужно.",
@@ -132,12 +140,37 @@ class EntryForm(forms.ModelForm):
         self.fields["reminder_at"].input_formats = ["%Y-%m-%dT%H:%M"]
         self.fields["date"].input_formats = ["%Y-%m-%d"]
 
+        # ★ Если редактируем существующую запись, заполняем поле тегов
+        if self.instance and self.instance.pk:
+            self.fields["tags_input"].initial = ", ".join(tag.name for tag in self.instance.tags.all())
+
     def clean_date(self):
         # Если дата не введена, возвращаем сегодняшнюю
         date = self.cleaned_data.get("date")
         if not date:
             return datetime.date.today()
         return date
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if commit:
+            instance.save()
+
+            # ★ Обрабатываем введенные теги через запятую
+            tags_str = self.cleaned_data.get("tags_input", "")
+            if tags_str:
+                # Разбиваем по запятой, убираем пробелы, создаем или находим теги
+                tag_names = [t.strip() for t in tags_str.split(",") if t.strip()]
+                tags = []
+                for name in tag_names:
+                    tag, _ = Tag.objects.get_or_create(name=name)
+                    tags.append(tag)
+                instance.tags.set(tags)
+            else:
+                # Если поле пустое, очищаем теги (если были)
+                instance.tags.clear()
+
+        return instance
 
 
 class ReminderForm(forms.ModelForm):

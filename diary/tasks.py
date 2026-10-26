@@ -37,7 +37,8 @@ def check_and_send_entry_reminders() -> int:
     """Напоминания по записям дневника (Entry.reminder_at)."""
     now = timezone.now()
     entries = Entry.objects.filter(
-        reminder_at__lte=now, reminder_sent=False,
+        reminder_at__lte=now,
+        reminder_sent=False,
     ).select_related("author")
 
     sent_count = 0
@@ -70,7 +71,8 @@ def check_and_send_calendar_reminders() -> int:
     """Напоминания из календаря (Reminder.remind_at)."""
     now = timezone.now()
     reminders = Reminder.objects.filter(
-        remind_at__lte=now, sent=False,
+        remind_at__lte=now,
+        sent=False,
     ).select_related("author")
 
     sent_count = 0

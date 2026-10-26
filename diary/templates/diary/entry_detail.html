@@ -1,12 +1,26 @@
 {% extends "diary/base.html" %}
-{% block title %}{{ entry.title }}{% endblock %}
+{% block title %}{{ entry.title|default:"Без названия" }}{% endblock %}
 
 {% block content %}
-    <div class="page-header">
-        <h1 class="page-title" style="max-width: 75%;">
-            {{ entry.title|default:"Без названия" }}
-        </h1>
-        <div class="text-muted">{{ entry.created_at|date:"j E Y, H:i" }}</div>
+    <div class="page-header" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Заголовок и дата -->
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 w-100">
+            <h1 class="page-title" style="max-width: 75%;">
+                {{ entry.title|default:"Без названия" }}
+            </h1>
+            <div class="text-muted">{{ entry.created_at|date:"j E Y, H:i" }}</div>
+        </div>
+
+        <!-- ★ Хлебные крошки (Путь к записи) -->
+        {% if breadcrumbs %}
+            <div class="breadcrumbs" style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                <a href="{% url 'diary:entry_list' %}" class="crumb-link">Главная</a>
+                {% for crumb in breadcrumbs %}
+                    <span>/</span>
+                    <a href="{% url 'diary:entry_list' %}?notebook={{ crumb.id }}" class="crumb-link">{{ crumb.title }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
 
     <div style="max-width: 860px;">
@@ -24,7 +38,7 @@
             {% endif %}
         {% endwith %}
 
-        <!-- ★ Блок вывода фото и видео -->
+        <!-- Блок вывода фото и видео -->
         {% if entry.attachments.all %}
             <div class="attachments-gallery mt-5">
                 <h4 class="mb-3" style="font-weight: 700; font-size: 20px;">Медиафайлы</h4>
@@ -48,7 +62,6 @@
                 </div>
             </div>
         {% endif %}
-        <!-- ★ Конец блока медиафайлов -->
 
         {% if entry.reminder_at %}
             <p class="mt-4 text-muted">
@@ -61,6 +74,17 @@
     <div class="mt-5 d-flex gap-2 flex-wrap">
         <a href="{% url 'diary:entry_update' entry.pk %}" class="btn-mint">Редактировать</a>
         <a href="{% url 'diary:entry_delete' entry.pk %}" class="btn-ghost">Удалить</a>
-        <a href="{% url 'diary:entry_list' %}" class="btn-ghost">← К списку</a>
     </div>
+
+    <style>
+        .crumb-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .crumb-link:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+    </style>
 {% endblock %}

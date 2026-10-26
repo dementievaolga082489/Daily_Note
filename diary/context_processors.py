@@ -1,5 +1,7 @@
-from .models import Notebook, Reminder, Entry
 from django.utils import timezone
+
+from .models import Entry, Notebook, Reminder
+
 
 def build_notebook_tree(notebooks):
     """Строит древовидную структуру папок."""
@@ -29,9 +31,9 @@ def sidebar_notebooks(request):
         all_notebooks = list(Notebook.objects.filter(author=request.user))
         tree_notebooks = build_notebook_tree(all_notebooks)
 
-        calendar_reminders = Reminder.objects.filter(
-            author=request.user, remind_at__gte=timezone.now()
-        ).order_by("remind_at")[:5]
+        calendar_reminders = Reminder.objects.filter(author=request.user, remind_at__gte=timezone.now()).order_by(
+            "remind_at"
+        )[:5]
 
         entry_reminders = Entry.objects.filter(
             author=request.user, reminder_at__gte=timezone.now(), reminder_sent=False

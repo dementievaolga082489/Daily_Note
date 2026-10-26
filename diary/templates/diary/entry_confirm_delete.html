@@ -2,10 +2,7 @@
 {% block title %}Удалить запись{% endblock %}
 
 {% block content %}
-    <div class="page-header">
-        <h1 class="page-title">Удалить запись?</h1>
-    </div>
-
+    <h1 class="page-title mb-4">Удалить запись?</h1>
     <p>
         Вы уверены, что хотите удалить «<strong>{{ object.title }}</strong>»?
         Это действие необратимо.
@@ -13,9 +10,10 @@
 
     <form method="post" class="mt-4">
         {% csrf_token %}
-        <button type="submit" class="btn-mint" style="background:#c98b8b;color:#fff;">
-            Удалить
-        </button>
-        <a href="{{ object.get_absolute_url }}" class="btn-ghost">Отмена</a>
+        <!-- ★ Скрытое поле для возврата на предыдущую страницу -->
+        <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
+
+        <button type="submit" class="btn btn-danger rounded-pill">Удалить</button>
+        <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary rounded-pill">Отмена</a>
     </form>
 {% endblock %}

@@ -18,11 +18,16 @@ class CustomUserAdmin(UserAdmin):
     ordering = ("-date_joined",)
 
     fieldsets = UserAdmin.fieldsets + (
-        ("Дополнительно", {
-            "fields": (
-                "phone", "avatar", "description",
-                "email_verified", "email_verification_token",
-            )
-        }),
+        (
+            "Дополнительно",
+            {
+                "fields": (
+                    "phone",
+                    "avatar",
+                    "description",
+                    "email_verified",
+                    "email_verification_token",
+                )
+            },
+        ),
     )
-

@@ -71,7 +71,7 @@
         .side-section-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; padding: 0 4px; }
 
         .side-actions { display: flex; gap: 4px; align-items: center; }
-        .side-add, .side-collapse { font-size: 18px; line-height: 1; color: var(--accent-hover); text-decoration: none; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: background .15s; cursor: pointer; }
+        .side-add, .side-collapse { font-size: 18px; line-height: 1; color: var(--accent-hover); text-decoration: none; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: background .15s; cursor: pointer; background: transparent; border: none; padding: 0; }
         .side-add:hover, .side-collapse:hover { background: var(--accent-soft); }
 
         /* ─── ДЕРЕВО ПАПОК ─── */
@@ -108,7 +108,6 @@
         }
         .nb-subdetails > summary::-webkit-details-marker { display: none; }
 
-        /* ★ Возвращаем стрелочку */
         .nb-arrow {
             width: 20px;
             text-align: center;
@@ -147,11 +146,6 @@
 
         .nb-empty { color: var(--text-muted); font-size: 13px; padding: 6px 12px; font-style: italic; }
 
-        /* Форма быстрого создания */
-        .quick-add-form { display: flex; gap: 4px; padding: 10px 4px 0; border-top: 1px solid var(--border); margin-top: 10px; }
-        .quick-add-input { flex: 1; font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: 6px; outline: none; min-width: 0; }
-        .quick-add-btn { background: var(--accent); color: var(--text); border: none; border-radius: 6px; padding: 0 10px; font-size: 18px; cursor: pointer; }
-
         /* ═══════════ ПРАВАЯ ЧАСТЬ ═══════════ */
         .page-wrap { flex: 1; min-width: 0; padding: 32px 48px 64px; box-sizing: border-box; }
         .page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
@@ -184,7 +178,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 1000;
-            min-width: 160px;
+            min-width: 200px;
             padding: 6px 0;
         }
         .context-menu a {
@@ -195,15 +189,9 @@
             font-size: 14px;
             transition: background 0.15s;
         }
-        .context-menu a:hover {
-            background: var(--paper-2);
-        }
-        .context-menu a.danger {
-            color: #b04a4a;
-        }
-        .context-menu a.danger:hover {
-            background: #f0dada;
-        }
+        .context-menu a:hover { background: var(--paper-2); }
+        .context-menu a.danger { color: #b04a4a; }
+        .context-menu a.danger:hover { background: #f0dada; }
 
         @media (max-width: 860px) {
             .layout { flex-direction: column; }
@@ -234,7 +222,7 @@
 <div class="layout">
     <aside class="sidebar">
         <nav class="side-nav">
-            <a href="{% url 'diary:entry_list' %}" class="side-link {% if request.resolver_match.url_name == 'entry_list' and not request.GET.notebook %}active{% endif %}">
+            <a href="{% url 'diary:entry_list' %}?all=1" class="side-link {% if request.resolver_match.url_name == 'entry_list' and not request.GET.notebook and not request.GET.q and not request.GET.tag %}active{% endif %}">
                 <span class="ico">📝</span> Все записи
             </a>
             {% if user.is_authenticated %}
@@ -265,7 +253,8 @@
                 <div class="side-section-head">
                     <span>Дневники</span>
                     <div class="side-actions">
-                        <a href="?close_all=1" class="side-collapse" title="Свернуть все папки">⇱</a>
+                        <!-- ★ Кнопка "Свернуть всё" (вызывает JS) -->
+                        <button type="button" onclick="collapseAllFolders()" class="side-collapse" title="Свернуть все папки">⇱</button>
                         <a href="{% url 'diary:notebook_create' %}" class="side-add" title="Создать корневую папку">+</a>
                     </div>
                 </div>
@@ -278,12 +267,6 @@
                         {% endif %}
                     </ul>
                 </div>
-
-                <form method="post" action="{% url 'diary:notebook_create' %}" class="quick-add-form">
-                    {% csrf_token %}
-                    <input type="text" name="title" placeholder="Новая папка..." class="quick-add-input" required>
-                    <button type="submit" class="quick-add-btn" title="Создать">+</button>
-                </form>
             </div>
         {% endif %}
     </aside>
@@ -294,13 +277,49 @@
                 <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
             {% endfor %}
         {% endif %}
+
+        <!-- ГЛОБАЛЬНАЯ СТРОКА ПОИСКА -->
+        <div class="search-bar mb-4 p-3" style="background: var(--paper); border: 1px solid var(--border); border-radius: 10px;">
+            <form method="get" action="{% url 'diary:entry_list' %}" class="row g-2 align-items-end">
+
+                {% if request.GET.notebook %}
+                    <input type="hidden" name="notebook" value="{{ request.GET.notebook }}">
+                {% endif %}
+
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Поиск (слово/заголовок)</label>
+                    <input type="text" name="q" value="{{ request.GET.q|default:'' }}" class="form-control form-control-sm" placeholder="Введите слово...">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">По тегу</label>
+                    <input type="text" name="tag" value="{{ request.GET.tag|default:'' }}" class="form-control form-control-sm" placeholder="Например: спорт">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Дата с</label>
+                    <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}" class="form-control form-control-sm">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Дата по</label>
+                    <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}" class="form-control form-control-sm">
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-mint btn-sm w-100">Искать</button>
+                    <a href="{% url 'diary:entry_list' %}{% if request.GET.notebook %}?notebook={{ request.GET.notebook }}{% endif %}" class="btn btn-outline-secondary btn-sm w-100">Сброс</a>
+                </div>
+            </form>
+        </div>
+
         {% block content %}{% endblock %}
     </main>
 </div>
 
 <!-- Контекстное меню (скрыто по умолчанию) -->
 <div id="contextMenu" class="context-menu">
-    <a href="#" id="ctxEdit">✏️ Переименовать</a>
+    <a href="#" id="ctxEdit">✏️ Редактировать</a>
     <a href="#" id="ctxDelete" class="danger">🗑️ Удалить</a>
 </div>
 
@@ -310,29 +329,67 @@
     const ctxEdit = document.getElementById('ctxEdit');
     const ctxDelete = document.getElementById('ctxDelete');
 
-    // Функция вызова меню по правому клику
-    function showContextMenu(e, notebookId, notebookTitle) {
+    function showContextMenu(e, type, id) {
         e.preventDefault();
         e.stopPropagation();
 
-        // Позиционируем меню по курсору
         contextMenu.style.left = e.pageX + 'px';
         contextMenu.style.top = e.pageY + 'px';
         contextMenu.style.display = 'block';
 
-        // Настраиваем ссылки
-        ctxEdit.href = `/notebooks/${notebookId}/edit/`;
-        ctxDelete.href = `/notebooks/${notebookId}/delete/`;
+        if (type === 'folder') {
+            ctxEdit.href = `/notebooks/${id}/edit/`;
+            ctxDelete.href = `/notebooks/${id}/delete/`;
+            ctxEdit.innerHTML = '✏️ Переименовать папку';
+            ctxDelete.innerHTML = '🗑️ Удалить папку';
+        } else if (type === 'entry') {
+            ctxEdit.href = `/entries/${id}/edit/`;
+            ctxDelete.href = `/entries/${id}/delete/`;
+            ctxEdit.innerHTML = '✏️ Редактировать запись';
+            ctxDelete.innerHTML = '🗑️ Удалить запись';
+        }
     }
 
-    // Скрываем меню при клике в любом другом месте
-    document.addEventListener('click', function() {
-        contextMenu.style.display = 'none';
-    });
+    document.addEventListener('click', function() { contextMenu.style.display = 'none'; });
+    window.addEventListener('scroll', function() { contextMenu.style.display = 'none'; });
 
-    // Скрываем при скролле
-    window.addEventListener('scroll', function() {
-        contextMenu.style.display = 'none';
+    // ★ Функция для сворачивания всех папок
+    function collapseAllFolders() {
+        // 1. Закрываем все открытые теги <details> визуально
+        document.querySelectorAll('details.nb-subdetails').forEach(function(details) {
+            details.removeAttribute('open');
+        });
+
+        // 2. Записываем в память браузера, что все папки закрыты
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('folder-')) {
+                localStorage.setItem(key, 'closed');
+            }
+        }
+    }
+
+    // Сохранение состояния папок в localStorage
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('details.nb-subdetails[id^="folder-"]').forEach(function(details) {
+            const folderId = details.id;
+            if (localStorage.getItem(folderId) === 'open') {
+                details.setAttribute('open', 'open');
+            } else if (localStorage.getItem(folderId) === 'closed') {
+                details.removeAttribute('open');
+            }
+        });
+
+        document.querySelectorAll('details.nb-subdetails[id^="folder-"]').forEach(function(details) {
+            details.addEventListener('toggle', function() {
+                const folderId = details.id;
+                if (details.open) {
+                    localStorage.setItem(folderId, 'open');
+                } else {
+                    localStorage.setItem(folderId, 'closed');
+                }
+            });
+        });
     });
 </script>
 </body>
