@@ -2,25 +2,31 @@
 {% block title %}Новый дневник{% endblock %}
 
 {% block content %}
-    <div class="page-header">
-        <h1 class="page-title">Новый дневник</h1>
+    <div class="page-header" style="margin-bottom: 30px;">
+        <h1 class="page-title" style="font-size: 28px; font-weight: 700;">
+            Новый дневник
+        </h1>
     </div>
 
     <form method="post" novalidate style="max-width: 460px;">
         {% csrf_token %}
+
         {% for field in form %}
             <div class="mb-3">
-                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}" style="color: var(--text-dark); font-size: 14px;">
                     {{ field.label }}
                 </label>
                 {{ field }}
-                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                {% if field.help_text %}
+                    <div class="form-text" style="color: var(--text-muted);">{{ field.help_text }}</div>
+                {% endif %}
                 {{ field.errors }}
             </div>
         {% endfor %}
-        <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn-mint">Создать</button>
-            <a href="{% url 'diary:entry_list' %}" class="btn-ghost">Отмена</a>
+
+        <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn-gold" style="border: none; cursor: pointer; padding: 10px 24px; font-size: 14px;">Создать</button>
+            <a href="{% url 'diary:entry_list' %}" class="btn-outline" style="text-decoration: none; padding: 9px 24px; font-size: 14px;">Отмена</a>
         </div>
     </form>
 {% endblock %}

@@ -10,9 +10,9 @@
 {% endblock %}
 
 {% block content %}
-    <div class="page-header">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
         <div class="d-flex align-items-center gap-3">
-            <h1 class="page-title m-0">
+            <h1 class="page-title m-0" style="font-size: 28px; font-weight: 700;">
                 {% if current_notebook %}
                     📁 {{ current_notebook.title }}
                 {% elif query or tag_query or date_from or date_to %}
@@ -23,15 +23,16 @@
             </h1>
         </div>
 
-        <a href="{% url 'diary:entry_create' %}{% if current_notebook_id %}?notebook={{ current_notebook_id }}{% endif %}" class="btn-mint">
+        <!-- Кнопка "Создать запись" с правильными отступами -->
+        <a href="{% url 'diary:entry_create' %}{% if current_notebook_id %}?notebook={{ current_notebook_id }}{% endif %}" class="btn-gold" style="padding: 10px 20px; font-size: 14px; margin-top: 10px; margin-bottom: 10px;">
             + Создать запись
         </a>
     </div>
 
     <!-- Блок папок (скрываем при поиске) -->
     {% if child_notebooks and not query and not tag_query and not date_from and not date_to %}
-        <div class="child-notebooks mb-4">
-            <h5 class="text-muted mb-3" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+        <div class="child-notebooks mb-4" style="margin-top: 20px;">
+            <h5 class="text-muted mb-3" style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; color: var(--text-muted);">
                 {% if current_notebook %}Подпапки{% else %}Мои папки{% endif %}
             </h5>
             <div class="row g-3">
@@ -50,7 +51,7 @@
 
     <!-- Список записей -->
     {% if entries %}
-        <div class="entry-list">
+        <div class="entry-list" style="margin-top: 30px;">
             {% for entry in entries %}
                 <a href="{{ entry.get_absolute_url }}" class="entry-row-link"
                    oncontextmenu="showContextMenu(event, 'entry', {{ entry.id }});">
@@ -117,26 +118,26 @@
         /* Стили для карточек папок */
         .child-notebooks {
             padding-bottom: 20px;
-            border-bottom: 1px dashed var(--border);
+            border-bottom: 1px dashed var(--border-color);
         }
         .folder-card {
             display: flex;
             align-items: center;
             padding: 12px 16px;
-            background: var(--paper);
-            border: 1px solid var(--border);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             text-decoration: none;
-            color: var(--text);
+            color: var(--text-dark);
             transition: all 0.15s ease;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
         .folder-card:hover {
-            border-color: var(--accent);
-            background: var(--paper-2);
+            border-color: var(--accent-green);
+            background: var(--bg-sidebar);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            color: var(--text);
+            color: var(--text-dark);
         }
         .folder-title {
             font-weight: 600;
@@ -149,18 +150,18 @@
         .entry-list {
             display: flex;
             flex-direction: column;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--border-color);
         }
 
         .entry-row-link {
             text-decoration: none;
             color: inherit;
             display: block;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-color);
             transition: background 0.15s;
         }
         .entry-row-link:hover {
-            background: var(--paper-2);
+            background: var(--bg-card);
             color: inherit;
         }
 
@@ -184,12 +185,12 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: var(--text);
+            color: var(--text-dark);
         }
         .entry-notebook {
             font-size: 12px;
             color: var(--text-muted);
-            background: var(--border);
+            background: var(--border-color);
             padding: 2px 8px;
             border-radius: 4px;
             white-space: nowrap;

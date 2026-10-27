@@ -33,9 +33,18 @@ from .services import ensure_daily_notebook
 
 def index(request):
     """Главная страница."""
-    return render(request, "diary/index.html", {"today": timezone.localdate()})
+    context = {"today": timezone.localdate()}
 
+    if request.user.is_authenticated:
+        # Получаем последние 3 записи текущего пользователя за текущий месяц
+        now = timezone.localdate()
+        context["recent_entries"] = Entry.objects.filter(
+            author=request.user,
+            date__year=now.year,
+            date__month=now.month
+        ).order_by('-date')[:3]
 
+    return render(request, "diary/index.html", context)
 # ─── Entry ────────────────────────────────────────────────────────────────
 class EntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """Список записей текущего пользователя."""

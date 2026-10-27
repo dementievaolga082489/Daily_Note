@@ -3,7 +3,7 @@
 
 {% block content %}
     <div class="page-header">
-        <h1 class="page-title">
+        <h1 class="page-title" style="font-size: 28px; font-weight: 700; margin-bottom: 20px;">
             {% if object %}Редактировать запись{% else %}Новая запись{% endif %}
         </h1>
     </div>
@@ -16,12 +16,12 @@
 
         {% for field in form %}
             <div class="mb-3">
-                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}" style="color: var(--text-dark); font-size: 14px;">
                     {{ field.label }}
                 </label>
                 {{ field }}
                 {% if field.help_text %}
-                    <div class="form-text">{{ field.help_text }}</div>
+                    <div class="form-text" style="color: var(--text-muted);">{{ field.help_text }}</div>
                 {% endif %}
                 {{ field.errors }}
             </div>
@@ -29,8 +29,8 @@
 
         <!-- Блок для рисования -->
         <div class="mb-4">
-            <label class="form-label fw-semibold">Рисунок</label>
-            <div style="border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px; background: #fff;">
+            <label class="form-label fw-semibold" style="color: var(--text-dark); font-size: 14px;">Рисунок</label>
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: #fff;">
                 <input type="hidden" name="drawing_data" id="drawingData">
 
                 {% if object %}
@@ -44,24 +44,24 @@
                 <canvas id="drawingCanvas" width="600" height="400" style="border: 1px solid #ccc; touch-action: none; display: block; max-width: 100%; background: #ffffff;"></canvas>
 
                 <div class="mt-2 d-flex gap-3 align-items-center flex-wrap">
-                    <button type="button" id="clearCanvas" class="btn btn-outline-secondary btn-sm">Очистить всё</button>
-                    <button type="button" id="eraserBtn" class="btn btn-outline-secondary btn-sm">Ластик</button>
+                    <button type="button" id="clearCanvas" class="btn-outline" style="padding: 6px 15px; font-size: 13px; border-radius: 6px;">Очистить всё</button>
+                    <button type="button" id="eraserBtn" class="btn-outline" style="padding: 6px 15px; font-size: 13px; border-radius: 6px;">Ластик</button>
                     <div class="d-flex align-items-center gap-1">
-                        <span style="font-size: 14px;">Цвет:</span>
-                        <input type="color" id="brushColor" value="#000000" style="width: 32px; height: 32px; padding: 0; border: none; cursor: pointer;" title="Цвет кисти">
+                        <span style="font-size: 13px; color: var(--text-muted);">Цвет:</span>
+                        <input type="color" id="brushColor" value="#000000" style="width: 30px; height: 30px; padding: 0; border: none; cursor: pointer;">
                     </div>
                     <div class="d-flex align-items-center gap-1">
-                        <span style="font-size: 14px;">Толщина:</span>
-                        <input type="range" id="brushSize" min="1" max="50" value="3" style="width: 100px;" title="Толщина кисти/ластика">
-                        <span id="brushSizeValue" style="font-size: 14px; width: 20px; text-align: center; font-weight: 600;">3</span>
+                        <span style="font-size: 13px; color: var(--text-muted);">Толщина:</span>
+                        <input type="range" id="brushSize" min="1" max="50" value="3" style="width: 100px; cursor: pointer;">
+                        <span id="brushSizeValue" style="font-size: 13px; width: 20px; text-align: center; font-weight: 600;">3</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="d-flex gap-2 mt-4">
-            <button type="submit" id="submitBtn" class="btn-mint">Сохранить</button>
-            <a href="{% url 'diary:entry_list' %}" class="btn-ghost">Отмена</a>
+        <div class="d-flex gap-3 mt-4">
+            <button type="submit" id="submitBtn" class="btn-gold" style="border: none; cursor: pointer; padding: 10px 24px; font-size: 14px;">Сохранить</button>
+            <a href="{% url 'diary:entry_list' %}" class="btn-outline" style="text-decoration: none; padding: 9px 24px; font-size: 14px;">Отмена</a>
         </div>
     </form>
 
@@ -122,7 +122,7 @@
                 if (isEraser) {
                     isEraser = false;
                     eraserBtn.classList.remove("btn-dark");
-                    eraserBtn.classList.add("btn-outline-secondary");
+                    eraserBtn.classList.add("btn-outline");
                 }
                 updateBrushStyle();
             });
@@ -132,11 +132,11 @@
             eraserBtn.addEventListener("click", () => {
                 isEraser = !isEraser;
                 if (isEraser) {
-                    eraserBtn.classList.remove("btn-outline-secondary");
+                    eraserBtn.classList.remove("btn-outline");
                     eraserBtn.classList.add("btn-dark");
                 } else {
                     eraserBtn.classList.remove("btn-dark");
-                    eraserBtn.classList.add("btn-outline-secondary");
+                    eraserBtn.classList.add("btn-outline");
                 }
                 updateBrushStyle();
             });
@@ -167,16 +167,14 @@
 
             if (form) {
                 form.addEventListener("submit", function(e) {
-                    // 1. Сохраняем рисунок в скрытое поле
                     const dataURL = canvas.toDataURL("image/png");
                     if (dataURL !== "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==") {
                         drawingDataInput.value = dataURL;
                     }
 
-                    // 2. Блокируем кнопку, чтобы избежать двойной отправки
                     if (submitBtn) {
                         submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Сохранение...';
+                        submitBtn.innerHTML = 'Сохранение...';
                         submitBtn.style.opacity = '0.7';
                         submitBtn.style.cursor = 'not-allowed';
                     }
