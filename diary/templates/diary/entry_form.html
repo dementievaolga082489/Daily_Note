@@ -15,16 +15,33 @@
         <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
 
         {% for field in form %}
-            <div class="mb-3">
-                <label class="form-label fw-semibold" for="{{ field.id_for_label }}" style="color: var(--text-dark); font-size: 14px;">
-                    {{ field.label }}
-                </label>
-                {{ field }}
-                {% if field.help_text %}
-                    <div class="form-text" style="color: var(--text-muted);">{{ field.help_text }}</div>
-                {% endif %}
-                {{ field.errors }}
-            </div>
+            {% if field.name == 'attachments' %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}" style="color: var(--text-dark); font-size: 14px;">
+                        {{ field.label }}
+                    </label>
+                    <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: #fff;">
+                        {{ field }}
+                        <!-- Блок для отображения выбранных файлов -->
+                        <div id="file-name-display" style="font-size: 13px; color: var(--text-muted); margin-top: 5px; word-break: break-all;"></div>
+                    </div>
+                    {% if field.help_text %}
+                        <div class="form-text" style="color: var(--text-muted);">{{ field.help_text }}</div>
+                    {% endif %}
+                    {{ field.errors }}
+                </div>
+            {% else %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="{{ field.id_for_label }}" style="color: var(--text-dark); font-size: 14px;">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="form-text" style="color: var(--text-muted);">{{ field.help_text }}</div>
+                    {% endif %}
+                    {{ field.errors }}
+                </div>
+            {% endif %}
         {% endfor %}
 
         <!-- Блок для рисования -->
@@ -67,6 +84,26 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // ★ Скрипт для отображения выбранных файлов
+            const fileInput = document.querySelector('input[type="file"][name="attachments"]');
+            const fileDisplay = document.getElementById('file-name-display');
+
+            if (fileInput && fileDisplay) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files.length > 0) {
+                        let names = [];
+                        for (let i = 0; i < this.files.length; i++) {
+                            names.push(this.files[i].name);
+                        }
+                        fileDisplay.textContent = 'Выбрано: ' + names.join(', ');
+                        fileDisplay.style.color = 'var(--accent-green)';
+                    } else {
+                        fileDisplay.textContent = '';
+                    }
+                });
+            }
+
+            // ★ Скрипт для рисования
             const canvas = document.getElementById("drawingCanvas");
             const ctx = canvas.getContext("2d");
             const clearBtn = document.getElementById("clearCanvas");
@@ -82,6 +119,7 @@
             let lastX = 0;
             let lastY = 0;
             let isEraser = false;
+            let hasDrawn = false; // ★ Флаг, что пользователь что-то нарисовал
 
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -95,6 +133,7 @@
                             const img = new Image();
                             img.onload = function() {
                                 ctx.drawImage(img, 0, 0);
+                                hasDrawn = true; // Если есть старый рисунок, считаем, что он есть
                             };
                             img.src = imgUrl;
                         {% endif %}
@@ -143,6 +182,7 @@
 
             canvas.addEventListener("mousedown", (e) => {
                 isDrawing = true;
+                hasDrawn = true; // ★ Отмечаем, что начали рисовать
                 [lastX, lastY] = [e.offsetX, e.offsetY];
             });
 
@@ -162,14 +202,18 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "#ffffff";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+                hasDrawn = false; // ★ Сбрасываем флаг при очистке
                 updateBrushStyle();
             });
 
             if (form) {
                 form.addEventListener("submit", function(e) {
-                    const dataURL = canvas.toDataURL("image/png");
-                    if (dataURL !== "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==") {
+                    // ★ Отправляем рисунок, только если что-то нарисовано
+                    if (hasDrawn) {
+                        const dataURL = canvas.toDataURL("image/png");
                         drawingDataInput.value = dataURL;
+                    } else {
+                        drawingDataInput.value = ""; // Если не рисовали, не отправляем
                     }
 
                     if (submitBtn) {

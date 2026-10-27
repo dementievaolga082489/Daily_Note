@@ -199,13 +199,13 @@
 
     <nav class="nav-menu">
         <a href="{% url 'diary:entry_list' %}?all=1" class="nav-item {% if request.resolver_match.url_name == 'entry_list' %}active{% endif %}">
-            <span>⊞</span> Все записи
+             Все записи
         </a>
         <a href="{% url 'diary:calendar' %}" class="nav-item {% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
-            <span>🔔</span> Напоминания
+            Напоминания
         </a>
         <a href="{% url 'users:profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
-            <span>👤</span> Профиль
+            Профиль
         </a>
     </nav>
 

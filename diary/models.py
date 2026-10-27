@@ -6,6 +6,7 @@ Tag — тег для записи.
 """
 
 import datetime
+import os
 
 from django.conf import settings
 from django.db import models
@@ -114,6 +115,7 @@ class Attachment(models.Model):
     file = models.FileField("Файл", upload_to="attachments/%Y/%m/%d/", help_text="Загрузите фото или видео.")
     is_video = models.BooleanField("Это видео", default=False, help_text="Поставьте галочку, если загружаете видео.")
     is_drawing = models.BooleanField("Это рисунок", default=False)
+    is_document = models.BooleanField("Это документ", default=False)
     uploaded_at = models.DateTimeField("Загружено", auto_now_add=True)
 
     class Meta:
@@ -122,6 +124,10 @@ class Attachment(models.Model):
 
     def __str__(self):
         return f"Вложение для {self.entry.title or self.entry.date}"
+
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
 
 
 class Reminder(models.Model):

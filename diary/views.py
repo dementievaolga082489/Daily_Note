@@ -45,6 +45,8 @@ def index(request):
         ).order_by('-date')[:3]
 
     return render(request, "diary/index.html", context)
+
+
 # ─── Entry ────────────────────────────────────────────────────────────────
 class EntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """Список записей текущего пользователя."""
@@ -177,10 +179,21 @@ class EntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         form.instance.author = self.request.user
         response = super().form_valid(form)
 
+        # Обработка обычных файлов (фото, видео, документы)
         for f in self.request.FILES.getlist("attachments"):
-            is_video = f.content_type.startswith("video/")
-            Attachment.objects.create(entry=self.object, file=f, is_video=is_video)
+            content_type = f.content_type
+            is_video = content_type.startswith("video/")
+            is_image = content_type.startswith("image/")
+            is_document = not is_video and not is_image
 
+            Attachment.objects.create(
+                entry=self.object,
+                file=f,
+                is_video=is_video,
+                is_document=is_document
+            )
+
+        # Обработка рисунка из Canvas
         drawing_data = self.request.POST.get("drawing_data")
         if drawing_data and drawing_data.startswith("data:image"):
             format, imgstr = drawing_data.split(";base64,")
@@ -191,7 +204,7 @@ class EntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         messages.success(self.request, "Запись создана.")
         return response
 
-    # ★ Возврат на предыдущую страницу
+    # Возврат на предыдущую страницу
     def get_success_url(self):
         next_url = self.request.POST.get("next")
         if next_url:
@@ -239,10 +252,21 @@ class EntryUpdateView(OwnEntryRequiredMixin, UpdateView):
         if old_drawing_id and drawing_data:
             Attachment.objects.filter(id=old_drawing_id, entry=self.object).delete()
 
+        # Обработка обычных файлов (фото, видео, документы)
         for f in self.request.FILES.getlist("attachments"):
-            is_video = f.content_type.startswith("video/")
-            Attachment.objects.create(entry=self.object, file=f, is_video=is_video)
+            content_type = f.content_type
+            is_video = content_type.startswith("video/")
+            is_image = content_type.startswith("image/")
+            is_document = not is_video and not is_image
 
+            Attachment.objects.create(
+                entry=self.object,
+                file=f,
+                is_video=is_video,
+                is_document=is_document
+            )
+
+        # Обработка рисунка из Canvas
         if drawing_data and drawing_data.startswith("data:image"):
             format, imgstr = drawing_data.split(";base64,")
             ext = format.split("/")[-1]
@@ -252,53 +276,13 @@ class EntryUpdateView(OwnEntryRequiredMixin, UpdateView):
         messages.success(self.request, "Запись обновлена.")
         return response
 
-    # ★ Возврат на предыдущую страницу
+    # Возврат на предыдущую страницу
     def get_success_url(self):
         next_url = self.request.POST.get("next")
         if next_url:
             return next_url
         return super().get_success_url()
 
-
-# class EntryDeleteView(OwnEntryRequiredMixin, DeleteView):
-#     model = Entry
-#     template_name = "diary/entry_confirm_delete.html"
-#     required_permission = "diary.delete_entry"
-#
-#     # ★ Возврат на предыдущую страницу
-#     def get_success_url(self):
-#         referer = self.request.META.get('HTTP_REFERER')
-#         if referer:
-#             return referer
-#         return reverse_lazy("diary:entry_list")
-
-# class EntryDeleteView(OwnEntryRequiredMixin, DeleteView):
-#     model = Entry
-#     template_name = "diary/entry_confirm_delete.html"
-#     required_permission = "diary.delete_entry"
-#
-#     def get_object(self, queryset=None):
-#         print("=" * 50)
-#         print("EntryDeleteView.get_object() вызван")
-#         print(f"pk из URL: {self.kwargs.get('pk')}")
-#         print(f"user_id: {self.request.user.id}")
-#
-#         # Вызываем родительский метод (он может взять объект из кэша)
-#         obj = super().get_object(queryset)
-#
-#         print(f"Найден объект: {obj}")
-#         if obj:
-#             print(f"author_id: {obj.author_id}")
-#             print(f"Совпадает ли author_id с user_id? {obj.author_id == self.request.user.id}")
-#         print("=" * 50)
-#
-#         return obj
-#
-#     def get_success_url(self):
-#         referer = self.request.META.get('HTTP_REFERER')
-#         if referer:
-#             return referer
-#         return reverse_lazy("diary:entry_list")
 
 class EntryDeleteView(OwnEntryRequiredMixin, DeleteView):
     model = Entry
@@ -316,6 +300,7 @@ class EntryDeleteView(OwnEntryRequiredMixin, DeleteView):
             return next_url
         # 2. Иначе — в общий список записей
         return reverse_lazy("diary:entry_list")
+
 
 # ─── Notebook (папки/дневники) ────────────────────────────────────────────
 class NotebookCreateView(LoginRequiredMixin, CreateView):
@@ -344,7 +329,7 @@ class NotebookCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, "Дневник создан.")
         return super().form_valid(form)
 
-    # ★ Возврат на предыдущую страницу
+    # Возврат на предыдущую страницу
     def get_success_url(self):
         next_url = self.request.POST.get("next")
         if next_url:
@@ -370,6 +355,7 @@ class NotebookDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             return next_url
         return reverse_lazy("diary:entry_list")
 
+
 class NotebookUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """Редактирование (переименование) дневника (папки)."""
 
@@ -389,7 +375,7 @@ class NotebookUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         messages.success(self.request, "Дневник обновлён.")
         return super().form_valid(form)
 
-    # ★ Возврат на предыдущую страницу
+    # Возврат на предыдущую страницу
     def get_success_url(self):
         next_url = self.request.POST.get("next")
         if next_url:
@@ -492,3 +478,16 @@ class ByTitleView(LoginRequiredMixin, View):
             "entries": entries,
             "reminders": reminders,
         })
+
+
+class AttachmentDeleteView(LoginRequiredMixin, DeleteView):
+    """Удаление отдельного вложения (файла/фото/документа)."""
+    model = Attachment
+
+    def get_success_url(self):
+        # После удаления возвращаемся на страницу записи
+        return self.object.entry.get_absolute_url()
+
+    def get_queryset(self):
+        # Удалять можно только свои вложения
+        return Attachment.objects.filter(entry__author=self.request.user)

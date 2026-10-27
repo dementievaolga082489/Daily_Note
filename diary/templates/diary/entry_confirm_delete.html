@@ -2,18 +2,31 @@
 {% block title %}Удалить запись{% endblock %}
 
 {% block content %}
-    <h1 class="page-title mb-4">Удалить запись?</h1>
-    <p>
-        Вы уверены, что хотите удалить «<strong>{{ object.title }}</strong>»?
-        Это действие необратимо.
-    </p>
+    <div class="page-header" style="margin-bottom: 30px;">
+        <h1 class="page-title" style="font-size: 28px; font-weight: 700;">
+            Удалить запись?
+        </h1>
+    </div>
 
-    <form method="post" class="mt-4">
+    <div class="card p-4 mb-4" style="background: var(--paper); border: 1px solid var(--border-color); border-radius: 10px; max-width: 600px;">
+        <p class="mb-2">
+            Вы уверены, что хотите удалить «<strong>{{ object.title|default:"Без названия" }}</strong>»?
+        </p>
+        <p class="text-muted small mb-0">
+            <em>Это действие необратимо.</em>
+        </p>
+    </div>
+
+    <form method="post">
         {% csrf_token %}
         <!-- ★ Скрытое поле для возврата на предыдущую страницу -->
         <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
 
-        <button type="submit" class="btn btn-danger rounded-pill">Удалить</button>
-        <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary rounded-pill">Отмена</a>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger rounded-pill" style="background-color: #c98b8b; border: none;">Удалить</button>
+            <a href="{% if object.notebook %}{% url 'diary:entry_list' %}?notebook={{ object.notebook.id }}{% else %}{% url 'diary:entry_list' %}{% endif %}" class="btn btn-outline-secondary rounded-pill">
+                Отмена
+            </a>
+        </div>
     </form>
 {% endblock %}

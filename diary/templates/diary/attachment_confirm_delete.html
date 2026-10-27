@@ -1,0 +1,27 @@
+{% extends "diary/base.html" %}
+{% block title %}Удалить файл{% endblock %}
+
+{% block content %}
+    <div class="page-header" style="margin-bottom: 30px;">
+        <h1 class="page-title" style="font-size: 28px; font-weight: 700;">
+            Удалить файл?
+        </h1>
+    </div>
+
+    <div class="card p-4 mb-4" style="background: var(--paper); border: 1px solid var(--border-color); border-radius: 10px; max-width: 600px;">
+        <p class="mb-2">
+            Вы уверены, что хотите удалить файл «<strong>{{ object.filename|default:"Без названия" }}</strong>»?
+        </p>
+        <p class="text-muted small mb-0">
+            <em>Это действие необратимо.</em>
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger rounded-pill" style="background-color: #c98b8b; border: none;">Удалить</button>
+            <a href="{{ object.entry.get_absolute_url }}" class="btn btn-outline-secondary rounded-pill">Отмена</a>
+        </div>
+    </form>
+{% endblock %}
