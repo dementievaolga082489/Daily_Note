@@ -28,8 +28,8 @@ from .models import Attachment, Entry, Notebook, Reminder
 from .permissions import OwnEntryRequiredMixin
 from .services import ensure_daily_notebook
 
-
 # ─── Вспомогательные функции ──────────────────────────────────────────────
+
 
 def index(request):
     """Главная страница."""
@@ -39,10 +39,8 @@ def index(request):
         # Получаем последние 3 записи текущего пользователя за текущий месяц
         now = timezone.localdate()
         context["recent_entries"] = Entry.objects.filter(
-            author=request.user,
-            date__year=now.year,
-            date__month=now.month
-        ).order_by('-date')[:3]
+            author=request.user, date__year=now.year, date__month=now.month
+        ).order_by("-date")[:3]
 
     return render(request, "diary/index.html", context)
 
@@ -127,7 +125,9 @@ class EntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         if current_notebook_id.isdigit():
             current_notebook = notebooks.filter(pk=int(current_notebook_id)).first()
             if current_notebook:
-                child_notebooks = Notebook.objects.filter(author=self.request.user, parent=current_notebook).order_by("title")
+                child_notebooks = Notebook.objects.filter(author=self.request.user, parent=current_notebook).order_by(
+                    "title"
+                )
                 breadcrumbs.append(current_notebook)
                 parent = current_notebook.parent
                 while parent:
@@ -186,19 +186,16 @@ class EntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
             is_image = content_type.startswith("image/")
             is_document = not is_video and not is_image
 
-            Attachment.objects.create(
-                entry=self.object,
-                file=f,
-                is_video=is_video,
-                is_document=is_document
-            )
+            Attachment.objects.create(entry=self.object, file=f, is_video=is_video, is_document=is_document)
 
         # Обработка рисунка из Canvas
         drawing_data = self.request.POST.get("drawing_data")
         if drawing_data and drawing_data.startswith("data:image"):
             format, imgstr = drawing_data.split(";base64,")
             ext = format.split("/")[-1]
-            data = ContentFile(base64.b64decode(imgstr), name=f"drawing_{timezone.now().strftime('%Y%m%d_%H%M%S')}.{ext}")
+            data = ContentFile(
+                base64.b64decode(imgstr), name=f"drawing_{timezone.now().strftime('%Y%m%d_%H%M%S')}.{ext}"
+            )
             Attachment.objects.create(entry=self.object, file=data, is_drawing=True)
 
         messages.success(self.request, "Запись создана.")
@@ -259,18 +256,15 @@ class EntryUpdateView(OwnEntryRequiredMixin, UpdateView):
             is_image = content_type.startswith("image/")
             is_document = not is_video and not is_image
 
-            Attachment.objects.create(
-                entry=self.object,
-                file=f,
-                is_video=is_video,
-                is_document=is_document
-            )
+            Attachment.objects.create(entry=self.object, file=f, is_video=is_video, is_document=is_document)
 
         # Обработка рисунка из Canvas
         if drawing_data and drawing_data.startswith("data:image"):
             format, imgstr = drawing_data.split(";base64,")
             ext = format.split("/")[-1]
-            data = ContentFile(base64.b64decode(imgstr), name=f"drawing_{timezone.now().strftime('%Y%m%d_%H%M%S')}.{ext}")
+            data = ContentFile(
+                base64.b64decode(imgstr), name=f"drawing_{timezone.now().strftime('%Y%m%d_%H%M%S')}.{ext}"
+            )
             Attachment.objects.create(entry=self.object, file=data, is_drawing=True)
 
         messages.success(self.request, "Запись обновлена.")
@@ -404,10 +398,14 @@ class CalendarView(LoginRequiredMixin, View):
             key = r.remind_at.date()
             grouped.setdefault(key, []).append(r)
 
-        return render(request, self.template_name, {
-            "grouped_reminders": grouped,
-            "month": month_param,
-        })
+        return render(
+            request,
+            self.template_name,
+            {
+                "grouped_reminders": grouped,
+                "month": month_param,
+            },
+        )
 
 
 class ReminderCreateView(LoginRequiredMixin, CreateView):
@@ -451,11 +449,15 @@ class ByDateView(LoginRequiredMixin, View):
         entries = Entry.objects.filter(author=request.user, date=target).select_related("notebook")
         reminders = Reminder.objects.filter(author=request.user, remind_at__date=target)
 
-        return render(request, self.template_name, {
-            "target_date": target,
-            "entries": entries,
-            "reminders": reminders,
-        })
+        return render(
+            request,
+            self.template_name,
+            {
+                "target_date": target,
+                "entries": entries,
+                "reminders": reminders,
+            },
+        )
 
 
 # ─── Записи по названию ───────────────────────────────────────────────────
@@ -473,15 +475,20 @@ class ByTitleView(LoginRequiredMixin, View):
             entries = Entry.objects.filter(author=request.user, title__icontains=query).select_related("notebook")
             reminders = Reminder.objects.filter(author=request.user, title__icontains=query)
 
-        return render(request, self.template_name, {
-            "query": query,
-            "entries": entries,
-            "reminders": reminders,
-        })
+        return render(
+            request,
+            self.template_name,
+            {
+                "query": query,
+                "entries": entries,
+                "reminders": reminders,
+            },
+        )
 
 
 class AttachmentDeleteView(LoginRequiredMixin, DeleteView):
     """Удаление отдельного вложения (файла/фото/документа)."""
+
     model = Attachment
 
     def get_success_url(self):

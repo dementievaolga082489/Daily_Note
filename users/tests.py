@@ -1,8 +1,9 @@
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.core import mail
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.core import mail
+from django.test import Client, TestCase
+from django.urls import reverse
+
 from .models import User
 
 
@@ -14,23 +15,22 @@ class UserViewsTest(TestCase):
         self.client = Client()
 
         # ★ Создаем ContentType и Permission ДО отправки формы
-        content_type, _ = ContentType.objects.get_or_create(
-            app_label="diary", model="entry"
-        )
+        content_type, _ = ContentType.objects.get_or_create(app_label="diary", model="entry")
         self.perm, _ = Permission.objects.get_or_create(
-            codename="add_entry",
-            content_type=content_type,
-            defaults={"name": "Can add entry"}
+            codename="add_entry", content_type=content_type, defaults={"name": "Can add entry"}
         )
 
     def test_user_registration(self):
         """Проверка регистрации: создание пользователя, выдача прав, отправка письма."""
-        response = self.client.post(reverse("users:register"), {
-            "username": "newuser",
-            "email": "newuser@example.com",
-            "password1": "StrongPass123!",
-            "password2": "StrongPass123!",
-        })
+        response = self.client.post(
+            reverse("users:register"),
+            {
+                "username": "newuser",
+                "email": "newuser@example.com",
+                "password1": "StrongPass123!",
+                "password2": "StrongPass123!",
+            },
+        )
 
         # После успешной регистрации должен быть редирект на страницу входа
         self.assertEqual(response.status_code, 302)
@@ -52,19 +52,18 @@ class UserViewsTest(TestCase):
     def test_user_login(self):
         """Проверка успешного входа в систему."""
         # Создаем активного пользователя с подтвержденным email
-        user = User.objects.create_user(
-            username="loginuser",
-            email="loginuser@example.com",
-            password="StrongPass123!"
-        )
+        user = User.objects.create_user(username="loginuser", email="loginuser@example.com", password="StrongPass123!")
         user.is_active = True
         user.email_verified = True
         user.save()
 
-        response = self.client.post(reverse("users:login"), {
-            "username": "loginuser@example.com",
-            "password": "StrongPass123!",
-        })
+        response = self.client.post(
+            reverse("users:login"),
+            {
+                "username": "loginuser@example.com",
+                "password": "StrongPass123!",
+            },
+        )
         # Успешный вход перенаправляет на главную (или на список записей)
         self.assertEqual(response.status_code, 302)
 

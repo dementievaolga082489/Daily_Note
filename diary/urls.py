@@ -14,7 +14,6 @@ urlpatterns = [
     path("entries/<int:pk>/delete/", views.EntryDeleteView.as_view(), name="entry_delete"),
     # ★ Маршрут для удаления вложения
     path("attachments/<int:pk>/delete/", views.AttachmentDeleteView.as_view(), name="attachment_delete"),
-
     # Notebooks (папки/дневники)
     path("notebooks/new/", views.NotebookCreateView.as_view(), name="notebook_create"),
     path("notebooks/<int:pk>/delete/", views.NotebookDeleteView.as_view(), name="notebook_delete"),

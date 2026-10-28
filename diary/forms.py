@@ -85,7 +85,7 @@ class EntryForm(forms.ModelForm):
     attachments = MultipleFileField(
         required=False,
         label="Добавить файлы (фото, видео, документы)",
-        help_text="Можно выбрать сразу несколько файлов (PNG, JPG, MP4, PDF, DOCX и т.д.)."
+        help_text="Можно выбрать сразу несколько файлов (PNG, JPG, MP4, PDF, DOCX и т.д.).",
     )
 
     tags_input = forms.CharField(
