@@ -148,8 +148,8 @@
             box-sizing: border-box;
             overflow-y: auto;
             overflow-x: hidden;
-            z-index: 10;
-            position: relative;
+            z-index: 200; /* Повышаем z-index, чтобы сайдбар был выше контента на мобильных */
+            transition: left 0.3s ease;
         }
 
         .brand {
@@ -250,16 +250,106 @@
         .btn-outline { background: transparent; color: var(--text-dark); border: 1px solid var(--border-color); padding: 9px 20px; border-radius: 8px; font-size: 14px; text-decoration: none; display: inline-block; transition: background 0.2s; }
         .btn-outline:hover { background: #e0e0e0; text-decoration: none; }
 
+        /* ─── Бургер и оверлей (скрыты на десктопе) ─── */
+        .burger { display: none; }
+        .sidebar-overlay { display: none; }
+
+        /* ─── Мобильная адаптация ─── */
         @media (max-width: 992px) {
-            .sidebar { width: 220px; padding: 20px 10px; }
-            .topbar { left: 220px; }
-            .main-content { padding: 70px 20px 20px 20px; }
-            .search-bar { flex-wrap: wrap; }
+            .topbar {
+                left: 0;
+                padding: 0 16px;
+                height: 60px;
+                justify-content: space-between; /* Распределяем элементы */
+            }
+
+            /* Показываем бургер */
+            .burger {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                background: transparent;
+                border: none;
+                font-size: 24px;
+                color: var(--text-dark);
+                cursor: pointer;
+            }
+
+            /* Сайдбар выезжает слева */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -100%; /* Спрятан за экраном */
+                width: 280px;
+                height: 100vh;
+                z-index: 200;
+            }
+            .sidebar.open {
+                left: 0; /* Выезжает */
+            }
+
+            /* Оверлей (затемнение) */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 150;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            .sidebar-overlay.active {
+                display: block;
+                opacity: 1;
+            }
+
+            /* Контент */
+            .main-content {
+                padding: 76px 16px 24px 16px;
+            }
+
+            /* Поисковая строка */
+            .search-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 16px;
+                gap: 12px;
+            }
+            .search-bar form {
+                flex-direction: column;
+                align-items: stretch !important;
+            }
+            .search-bar .search-field {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .search-bar .btn-search,
+            .search-bar .btn-reset {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+            .search-bar > div > div {
+                width: 100%;
+            }
+
+            /* Карточки */
+            .entry-card {
+                padding: 18px;
+            }
+            .page-title {
+                font-size: 22px;
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+<!-- Оверлей для затемнения (виден только на мобильных) -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
 <!-- Сайдбар -->
 <aside class="sidebar">
@@ -297,6 +387,9 @@
 
 <!-- Шапка -->
 <header class="topbar">
+    <!-- Бургер для мобильных -->
+    <button class="burger" onclick="toggleSidebar()" aria-label="Меню">☰</button>
+
     {% if user.is_authenticated %}
         <div class="topbar-user">
             <span>{{ user.full_name }}</span>
@@ -391,6 +484,21 @@
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key.startsWith('folder-')) localStorage.setItem(key, 'closed');
+        }
+    }
+
+    // Логика мобильного бургера
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+
+        // Блокируем прокрутку body, когда меню открыто
+        if (sidebar.classList.contains('open')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
         }
     }
 
