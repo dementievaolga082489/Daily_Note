@@ -58,6 +58,7 @@
                     {% endfor %}
                 {% endif %}
 
+                <!-- Добавлен touch-action: none для корректной работы на мобильных -->
                 <canvas id="drawingCanvas" width="600" height="400" style="border: 1px solid #ccc; touch-action: none; display: block; max-width: 100%; background: #ffffff;"></canvas>
 
                 <div class="mt-2 d-flex gap-3 align-items-center flex-wrap">
@@ -119,8 +120,9 @@
             let lastX = 0;
             let lastY = 0;
             let isEraser = false;
-            let hasDrawn = false; // ★ Флаг, что пользователь что-то нарисовал
+            let hasDrawn = false;
 
+            // Заливаем белым фоном
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -132,8 +134,9 @@
                             const imgUrl = "{{ att.file.url }}";
                             const img = new Image();
                             img.onload = function() {
-                                ctx.drawImage(img, 0, 0);
-                                hasDrawn = true; // Если есть старый рисунок, считаем, что он есть
+                                // Масштабируем картинку под размер холста
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                hasDrawn = true;
                             };
                             img.src = imgUrl;
                         {% endif %}
@@ -180,40 +183,74 @@
                 updateBrushStyle();
             });
 
-            canvas.addEventListener("mousedown", (e) => {
-                isDrawing = true;
-                hasDrawn = true; // ★ Отмечаем, что начали рисовать
-                [lastX, lastY] = [e.offsetX, e.offsetY];
-            });
+            // ─── Универсальные функции для мыши и касаний ───
+            function getCoords(e) {
+                const rect = canvas.getBoundingClientRect();
+                // Если это touch-событие
+                if (e.touches && e.touches.length > 0) {
+                    return {
+                        x: e.touches[0].clientX - rect.left,
+                        y: e.touches[0].clientY - rect.top
+                    };
+                }
+                // Если это mouse-событие
+                return {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+            }
 
-            canvas.addEventListener("mousemove", (e) => {
+            function startDraw(e) {
+                isDrawing = true;
+                hasDrawn = true;
+                const coords = getCoords(e);
+                [lastX, lastY] = [coords.x, coords.y];
+                e.preventDefault(); // Блокируем прокрутку на телефоне
+            }
+
+            function draw(e) {
                 if (!isDrawing) return;
+                const coords = getCoords(e);
                 ctx.beginPath();
                 ctx.moveTo(lastX, lastY);
-                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.lineTo(coords.x, coords.y);
                 ctx.stroke();
-                [lastX, lastY] = [e.offsetX, e.offsetY];
-            });
+                [lastX, lastY] = [coords.x, coords.y];
+                e.preventDefault();
+            }
 
-            canvas.addEventListener("mouseup", () => isDrawing = false);
-            canvas.addEventListener("mouseout", () => isDrawing = false);
+            function endDraw(e) {
+                isDrawing = false;
+                if (e) e.preventDefault();
+            }
+
+            // ─── События мыши (ПК) ───
+            canvas.addEventListener("mousedown", startDraw);
+            canvas.addEventListener("mousemove", draw);
+            canvas.addEventListener("mouseup", endDraw);
+            canvas.addEventListener("mouseout", endDraw);
+
+            // ─── События касаний (смартфоны) ───
+            canvas.addEventListener("touchstart", startDraw, { passive: false });
+            canvas.addEventListener("touchmove", draw, { passive: false });
+            canvas.addEventListener("touchend", endDraw);
+            canvas.addEventListener("touchcancel", endDraw);
 
             clearBtn.addEventListener("click", () => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "#ffffff";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                hasDrawn = false; // ★ Сбрасываем флаг при очистке
+                hasDrawn = false;
                 updateBrushStyle();
             });
 
             if (form) {
                 form.addEventListener("submit", function(e) {
-                    // ★ Отправляем рисунок, только если что-то нарисовано
                     if (hasDrawn) {
                         const dataURL = canvas.toDataURL("image/png");
                         drawingDataInput.value = dataURL;
                     } else {
-                        drawingDataInput.value = ""; // Если не рисовали, не отправляем
+                        drawingDataInput.value = "";
                     }
 
                     if (submitBtn) {
