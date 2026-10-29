@@ -37,7 +37,7 @@
             overflow: hidden;
         }
 
-        /* ─── Базовые стили для полей и кнопок (на случай отсутствия Bootstrap) ─── */
+        /* ─── Базовые стили для полей и кнопок ─── */
         input, textarea, select {
             font-family: inherit;
             font-size: 13px;
@@ -63,6 +63,7 @@
             font-size: 13px;
             transition: background 0.2s;
         }
+
         /* Убираем стандартные синие ссылки */
         a {
             color: inherit;
@@ -70,6 +71,33 @@
         }
         a:hover {
             text-decoration: underline;
+        }
+
+        /* ─── Стили для кнопки "Показать пароль" ─── */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .password-wrapper input {
+            padding-right: 40px; /* Место под иконку */
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: var(--text-muted);
+            user-select: none;
+            padding: 0;
+            line-height: 1;
+        }
+        .toggle-password:hover {
+            color: var(--text-dark);
+            background: none;
         }
 
         /* ─── Шапка сверху ─── */
@@ -367,6 +395,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
+        // 1. Логика запоминания открытых папок
         document.querySelectorAll('details.nb-subdetails[id^="folder-"]').forEach(details => {
             if (localStorage.getItem(details.id) === 'open') details.setAttribute('open', 'open');
             else if (localStorage.getItem(details.id) === 'closed') details.removeAttribute('open');
@@ -374,6 +403,34 @@
             details.addEventListener('toggle', () => {
                 localStorage.setItem(details.id, details.open ? 'open' : 'closed');
             });
+        });
+
+        // 2. Логика добавления кнопки "Показать пароль"
+        document.querySelectorAll('input[type="password"]').forEach(input => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'password-wrapper';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'toggle-password';
+            toggleBtn.innerHTML = '👁️';
+            toggleBtn.title = 'Показать пароль';
+
+            toggleBtn.addEventListener('click', function() {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggleBtn.innerHTML = '🙈';
+                    toggleBtn.title = 'Скрыть пароль';
+                } else {
+                    input.type = 'password';
+                    toggleBtn.innerHTML = '👁️';
+                    toggleBtn.title = 'Показать пароль';
+                }
+            });
+
+            wrapper.appendChild(toggleBtn);
         });
     });
 </script>
