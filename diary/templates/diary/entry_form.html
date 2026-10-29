@@ -22,7 +22,6 @@
                     </label>
                     <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: #fff;">
                         {{ field }}
-                        <!-- Блок для отображения выбранных файлов -->
                         <div id="file-name-display" style="font-size: 13px; color: var(--text-muted); margin-top: 5px; word-break: break-all;"></div>
                     </div>
                     {% if field.help_text %}
@@ -58,7 +57,6 @@
                     {% endfor %}
                 {% endif %}
 
-                <!-- Добавлен touch-action: none для корректной работы на мобильных -->
                 <canvas id="drawingCanvas" width="600" height="400" style="border: 1px solid #ccc; touch-action: none; display: block; max-width: 100%; background: #ffffff;"></canvas>
 
                 <div class="mt-2 d-flex gap-3 align-items-center flex-wrap">
@@ -134,7 +132,6 @@
                             const imgUrl = "{{ att.file.url }}";
                             const img = new Image();
                             img.onload = function() {
-                                // Масштабируем картинку под размер холста
                                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                                 hasDrawn = true;
                             };
@@ -148,9 +145,13 @@
                 if (isEraser) {
                     ctx.strokeStyle = "#ffffff";
                     canvas.style.cursor = "cell";
+                    eraserBtn.style.background = "var(--text-dark)";
+                    eraserBtn.style.color = "#fff";
                 } else {
                     ctx.strokeStyle = colorInput.value;
                     canvas.style.cursor = "crosshair";
+                    eraserBtn.style.background = "transparent";
+                    eraserBtn.style.color = "var(--text-dark)";
                 }
                 ctx.lineWidth = sizeInput.value;
                 sizeValue.textContent = sizeInput.value;
@@ -160,43 +161,36 @@
             ctx.lineCap = "round";
             updateBrushStyle();
 
-            colorInput.addEventListener("change", () => {
+            // При выборе цвета всегда выключаем ластик
+            colorInput.addEventListener("input", () => {
                 if (isEraser) {
                     isEraser = false;
-                    eraserBtn.classList.remove("btn-dark");
-                    eraserBtn.classList.add("btn-outline");
+                    updateBrushStyle();
                 }
-                updateBrushStyle();
             });
 
             sizeInput.addEventListener("input", updateBrushStyle);
 
+            // Переключение ластика
             eraserBtn.addEventListener("click", () => {
                 isEraser = !isEraser;
-                if (isEraser) {
-                    eraserBtn.classList.remove("btn-outline");
-                    eraserBtn.classList.add("btn-dark");
-                } else {
-                    eraserBtn.classList.remove("btn-dark");
-                    eraserBtn.classList.add("btn-outline");
-                }
                 updateBrushStyle();
             });
 
-            // ─── Универсальные функции для мыши и касаний ───
+            // ─── Функция для точного определения координат (учитывает масштаб на телефоне) ───
             function getCoords(e) {
                 const rect = canvas.getBoundingClientRect();
-                // Если это touch-событие
-                if (e.touches && e.touches.length > 0) {
-                    return {
-                        x: e.touches[0].clientX - rect.left,
-                        y: e.touches[0].clientY - rect.top
-                    };
-                }
-                // Если это mouse-событие
+                // Определяем, какая точка нажата (палец или мышь)
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                // Вычисляем масштаб между реальным размером холста и его отображением на экране
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+
                 return {
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
                 };
             }
 
@@ -205,7 +199,7 @@
                 hasDrawn = true;
                 const coords = getCoords(e);
                 [lastX, lastY] = [coords.x, coords.y];
-                e.preventDefault(); // Блокируем прокрутку на телефоне
+                e.preventDefault(); // Блокируем прокрутку
             }
 
             function draw(e) {
