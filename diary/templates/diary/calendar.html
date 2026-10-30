@@ -7,7 +7,6 @@
             Напоминания
         </h1>
 
-        <!-- ★ Кнопка создания напоминания (вместо синей ссылки) -->
         <a href="{% url 'diary:reminder_create' %}" class="btn-gold" style="padding: 10px 20px; font-size: 14px;">
             + Новое напоминание
         </a>
@@ -27,27 +26,37 @@
         {% for date, items in grouped_reminders.items %}
             <h4 class="mt-4 mb-3" style="font-weight: 700; color: var(--text-dark); font-size: 18px;">{{ date|date:"j E Y" }}</h4>
             <ul class="list-group mb-3" style="list-style: none; padding: 0;">
-                {% for r in items %}
+                {% for item in items %}
                     <li class="list-group-item" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 10px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong style="font-size: 16px; color: var(--text-dark);">{{ r.title }}</strong>
-                            <span style="color: var(--text-muted); font-size: 14px; margin-left: 10px;">— {{ r.remind_at|date:"H:i" }}</span>
+                        <div style="flex: 1;">
+                            <!-- Если это запись, делаем заголовок ссылкой -->
+                            {% if item.is_entry %}
+                                <a href="{{ item.url }}" style="font-weight: 700; font-size: 16px; color: var(--text-dark); text-decoration: none;">
+                                    📝 {{ item.title }}
+                                </a>
+                            {% else %}
+                                <strong style="font-size: 16px; color: var(--text-dark);">📅 {{ item.title }}</strong>
+                            {% endif %}
 
-                            {% if r.sent %}
+                            <span style="color: var(--text-muted); font-size: 14px; margin-left: 10px;">— {{ item.time|date:"H:i" }}</span>
+
+                            {% if item.sent %}
                                 <span style="font-size: 12px; background: var(--bg-sidebar); color: var(--text-dark); padding: 2px 8px; border-radius: 12px; margin-left: 10px;">отправлено</span>
                             {% endif %}
 
-                            {% if r.description %}
+                            {% if item.description %}
                                 <div style="font-size: 13px; color: var(--text-muted); margin-top: 5px;">
-                                    {{ r.description|truncatechars:120 }}
+                                    {{ item.description|truncatechars:120 }}
                                 </div>
                             {% endif %}
                         </div>
 
-                        <!-- Кнопка удаления (аккуратная, без синего цвета) -->
-                        <a href="{% url 'diary:reminder_delete' r.pk %}" class="btn-outline" style="padding: 6px 12px; font-size: 13px;">
-                            Удалить
-                        </a>
+                        <!-- Кнопка удаления (только для отдельных напоминаний, не для записей) -->
+                        {% if not item.is_entry %}
+                            <a href="{{ item.delete_url }}" class="btn-outline" style="padding: 6px 12px; font-size: 13px; white-space: nowrap; margin-left: 10px;">
+                                Удалить
+                            </a>
+                        {% endif %}
                     </li>
                 {% endfor %}
             </ul>

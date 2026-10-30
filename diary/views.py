@@ -384,19 +384,64 @@ class CalendarView(LoginRequiredMixin, View):
     template_name = "diary/calendar.html"
 
     def get(self, request):
-        reminders = Reminder.objects.filter(author=request.user)
+        # 1. Берем отдельные напоминания из модели Reminder
+        reminders = list(Reminder.objects.filter(author=request.user))
+
+        # 2. Берем записи дневника, у которых установлено время напоминания
+        entry_reminders = list(
+            Entry.objects.filter(
+                author=request.user,
+                reminder_at__isnull=False
+            ).select_related("notebook")
+        )
+
         month_param = request.GET.get("month", "").strip()
         if month_param:
             try:
                 year, month = map(int, month_param.split("-"))
-                reminders = reminders.filter(remind_at__year=year, remind_at__month=month)
+                # Фильтруем оба списка по выбранному месяцу
+                reminders = [r for r in reminders if r.remind_at.year == year and r.remind_at.month == month]
+                entry_reminders = [e for e in entry_reminders if
+                                   e.reminder_at.year == year and e.reminder_at.month == month]
             except ValueError:
                 pass
 
+        # Группируем всё вместе по дате
         grouped: dict = {}
+
+        # Добавляем календарные напоминания (Reminder)
         for r in reminders:
             key = r.remind_at.date()
-            grouped.setdefault(key, []).append(r)
+            if key not in grouped:
+                grouped[key] = []
+            grouped[key].append({
+                "title": r.title,
+                "time": r.remind_at,
+                "sent": r.sent,
+                "description": r.description,
+                "is_entry": False,
+                "url": None,
+                "delete_url": f"/reminders/{r.pk}/delete/"  # или через reverse("diary:reminder_delete", args=[r.pk])
+            })
+
+        # Добавляем напоминания из записей (Entry)
+        for e in entry_reminders:
+            key = e.reminder_at.date()
+            if key not in grouped:
+                grouped[key] = []
+            grouped[key].append({
+                "title": e.title or "Без названия",
+                "time": e.reminder_at,
+                "sent": e.reminder_sent,
+                "description": e.content[:120] if e.content else "",
+                "is_entry": True,
+                "url": e.get_absolute_url(),
+                "delete_url": None  # запись удаляется через страницу просмотра записи
+            })
+
+        # Сортируем элементы внутри каждой даты по времени
+        for key in grouped:
+            grouped[key].sort(key=lambda x: x["time"])
 
         return render(
             request,
@@ -406,8 +451,6 @@ class CalendarView(LoginRequiredMixin, View):
                 "month": month_param,
             },
         )
-
-
 class ReminderCreateView(LoginRequiredMixin, CreateView):
     """Добавление напоминания в календарь."""
 
