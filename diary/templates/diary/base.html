@@ -148,7 +148,7 @@
             box-sizing: border-box;
             overflow-y: auto;
             overflow-x: hidden;
-            z-index: 200; /* Повышаем z-index, чтобы сайдбар был выше контента на мобильных */
+            z-index: 200;
             transition: left 0.3s ease;
         }
 
@@ -444,9 +444,20 @@
 </main>
 
 <!-- Контекстное меню -->
-<div id="contextMenu" style="display:none; position:absolute; background:#fff; border:1px solid var(--border-color); border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:1000; min-width:180px; padding:5px 0;">
-    <a href="#" id="ctxEdit" style="display:block; padding:8px 15px; color:var(--text-dark); text-decoration:none; font-size:13px;">✏️ Редактировать</a>
-    <a href="#" id="ctxDelete" style="display:block; padding:8px 15px; color:#d9534f; text-decoration:none; font-size:13px;">🗑️ Удалить</a>
+<div id="contextMenu" style="
+    display:none;
+    position:fixed;
+    background:#fff;
+    border:1px solid var(--border-color);
+    border-radius:8px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    z-index:10000;
+    min-width:180px;
+    padding:5px 0;
+    max-width: calc(100vw - 20px);
+">
+    <a href="#" id="ctxEdit" style="display:block; padding:10px 15px; color:var(--text-dark); text-decoration:none; font-size:14px;">✏️ Редактировать</a>
+    <a href="#" id="ctxDelete" style="display:block; padding:10px 15px; color:#d9534f; text-decoration:none; font-size:14px;">🗑️ Удалить</a>
 </div>
 
 <!-- Локальный Bootstrap JS -->
@@ -455,13 +466,11 @@
     const contextMenu = document.getElementById('contextMenu');
     const ctxEdit = document.getElementById('ctxEdit');
     const ctxDelete = document.getElementById('ctxDelete');
+    let touchTimer = null;
 
     function showContextMenu(e, type, id) {
         e.preventDefault();
         e.stopPropagation();
-        contextMenu.style.left = e.pageX + 'px';
-        contextMenu.style.top = e.pageY + 'px';
-        contextMenu.style.display = 'block';
 
         if (type === 'folder') {
             ctxEdit.href = `/notebooks/${id}/edit/`;
@@ -474,9 +483,45 @@
             ctxEdit.innerHTML = '✏️ Редактировать запись';
             ctxDelete.innerHTML = '🗑️ Удалить запись';
         }
+
+        // Сначала показываем меню (чтобы узнать его размеры)
+        contextMenu.style.display = 'block';
+
+        // Получаем координаты (для мыши и для пальца)
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+            clientX = e.changedTouches[0].clientX;
+            clientY = e.changedTouches[0].clientY;
+        }
+
+        const menuWidth = contextMenu.offsetWidth;
+        const menuHeight = contextMenu.offsetHeight;
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+
+        // Корректируем, чтобы не вылезало за экран
+        let x = clientX;
+        let y = clientY;
+        if (x + menuWidth > screenWidth) x = screenWidth - menuWidth - 10;
+        if (y + menuHeight > screenHeight) y = screenHeight - menuHeight - 10;
+        if (x < 10) x = 10;
+        if (y < 10) y = 10;
+
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
     }
 
-    document.addEventListener('click', () => contextMenu.style.display = 'none');
+    // Закрываем меню при клике/тапе вне его
+    document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none';
+    });
+    document.addEventListener('touchstart', (e) => {
+        if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none';
+    });
     window.addEventListener('scroll', () => contextMenu.style.display = 'none');
 
     function collapseAllFolders() {
@@ -494,7 +539,6 @@
         sidebar.classList.toggle('open');
         overlay.classList.toggle('active');
 
-        // Блокируем прокрутку body, когда меню открыто
         if (sidebar.classList.contains('open')) {
             document.body.style.overflow = 'hidden';
         } else {
