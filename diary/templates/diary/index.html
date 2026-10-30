@@ -1,0 +1,137 @@
+{% extends "diary/base.html" %}
+{% load static %}
+{% block title %}Добро пожаловать{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Стили для главной страницы */
+    .welcome-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; position: relative; }
+    .welcome-text { max-width: 500px; z-index: 10; }
+    .welcome-title { font-size: 48px; font-weight: 700; color: var(--text-dark); margin: 0 0 10px 0; line-height: 1.1; }
+    .welcome-date { font-size: 14px; color: var(--text-muted); margin-bottom: 25px; }
+
+    /* Контейнер для картинки с книгами */
+    .welcome-image-container {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        z-index: 10;
+    }
+    .welcome-img {
+        width: 500px;
+        max-width: 100%;
+        height: auto;
+        object-fit: contain;
+        mix-blend-mode: multiply; /* Убирает белый фон у книги */
+    }
+
+    .section-title { font-size: 24px; font-weight: 700; color: var(--text-dark); margin: 40px 0 20px 0; z-index: 10; position: relative; }
+
+    /* Карточки дневников */
+    .diaries-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; position: relative; z-index: 10; }
+    .diary-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; }
+    .diary-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+    .diary-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; font-size: 18px; font-weight: 600; }
+    .diary-card-stats { font-size: 12px; color: var(--text-muted); margin-bottom: 15px; }
+
+    .diary-subfolders { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .diary-subfolders li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dark); padding: 8px 10px; background: #f9f9f9; border-radius: 8px; }
+    .diary-subfolders li a { color: var(--text-dark); text-decoration: none; flex: 1; }
+
+    .create-diary-card { border: 2px dashed #cbd6ce; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); font-size: 14px; text-align: center; text-decoration: none; padding: 40px 20px; }
+    .create-diary-card:hover { background: #f0f4f1; }
+    .create-diary-icon { font-size: 32px; background: var(--accent-green); color: #fff; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+
+    /* Сетка записей */
+    .entries-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; position: relative; z-index: 10; }
+    .entry-card-mini { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); position: relative; }
+    .entry-date-mini { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+    .entry-title-mini { font-size: 16px; font-weight: 600; color: var(--text-dark); margin-bottom: 8px; }
+    .entry-text-mini { font-size: 13px; color: var(--text-muted); line-height: 1.4; margin-bottom: 15px; height: 40px; overflow: hidden; }
+    .entry-tag-mini { font-size: 11px; background: #e3e8e4; color: var(--text-dark); padding: 2px 8px; border-radius: 12px; display: inline-block; }
+
+    .card-menu-btn { position: absolute; top: 15px; right: 15px; cursor: pointer; color: var(--text-muted); font-weight: bold; font-size: 18px; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Приветственный блок -->
+    <div class="welcome-section">
+        <div class="welcome-text">
+            <h1 class="welcome-title">Добро пожаловать</h1>
+            <div class="welcome-date">Сегодня {{ today|date:"j E Y" }}.</div>
+            <a href="{% url 'diary:entry_list' %}?all=1" class="btn-gold">
+                <span>📖</span> Перейти к записям <span>→</span>
+            </a>
+        </div>
+
+        <!-- Картинка с книгами и чашкой (белый фон убирается через CSS) -->
+        <div class="welcome-image-container">
+            <img src="{% static 'images/books.png' %}" alt="Книги и кофе" class="welcome-img">
+        </div>
+    </div>
+
+    <!-- Мои дневники -->
+    <h2 class="section-title">Мои дневники</h2>
+
+    <div class="diaries-grid">
+        <!-- Карточка создания дневника -->
+        <a href="{% url 'diary:notebook_create' %}" class="diary-card create-diary-card">
+            <div class="create-diary-icon">+</div>
+            Создать новый<br>дневник
+        </a>
+
+        <!-- Корневые папки -->
+        {% for nb in side_notebooks %}
+            {% if nb.level == 0 %}
+                <div class="diary-card" oncontextmenu="showContextMenu(event, 'folder', {{ nb.id }}); return false;">
+                    <div>
+                        <div class="diary-card-header">
+                            <span class="folder-icon">📁</span> {{ nb.title }}
+                            <span class="card-menu-btn">⋮</span>
+                        </div>
+                        <div class="diary-card-stats">
+                            {{ nb.children_list|length }} папок • {{ nb.entries.count }} записей
+                        </div>
+
+                        <ul class="diary-subfolders">
+                            {% for child in nb.children_list %}
+                                <li>
+                                    <span>📁</span>
+                                    <a href="{% url 'diary:entry_list' %}?notebook={{ child.id }}">{{ child.title }}</a>
+                                    <span style="color:var(--text-muted);">></span>
+                                </li>
+                            {% empty %}
+                                <li style="color:var(--text-muted); font-style:italic; font-size:12px;">Нет подпапок</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Последние записи -->
+    <h2 class="section-title">Записи за {{ today|date:"F Y" }}</h2>
+
+    <div class="entries-grid">
+        {% for entry in recent_entries %}
+            <div class="entry-card-mini" oncontextmenu="showContextMenu(event, 'entry', {{ entry.id }}); return false;">
+                <span class="card-menu-btn">⋮</span>
+                <div class="entry-date-mini">
+                    <span>📅</span> {{ entry.date|date:"j E Y" }}
+                </div>
+                <a href="{{ entry.get_absolute_url }}" style="text-decoration:none;">
+                    <div class="entry-title-mini">{{ entry.title|default:"Без названия" }}</div>
+                    <div class="entry-text-mini">{{ entry.content|truncatewords:12 }}</div>
+                </a>
+                {% if entry.notebook %}
+                    <span class="entry-tag-mini">📁 {{ entry.notebook.title }}</span>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p style="color:var(--text-muted);">В этом месяце еще нет записей.</p>
+        {% endfor %}
+    </div>
+{% endblock %}
