@@ -54,7 +54,6 @@ class EntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     context_object_name = "entries"
     paginate_by = 10
     permission_required = "diary.view_entry"
-    raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
         ensure_daily_notebook(request.user)
