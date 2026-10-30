@@ -420,7 +420,7 @@ class CalendarView(LoginRequiredMixin, View):
                     "description": r.description,
                     "is_entry": False,
                     "url": None,
-                    "delete_url": f"/reminders/{r.pk}/delete/",  # или через reverse("diary:reminder_delete", args=[r.pk])
+                    "delete_url": f"/reminders/{r.pk}/delete/",
                 }
             )
 
