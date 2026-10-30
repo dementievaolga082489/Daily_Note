@@ -23,10 +23,36 @@
             </h1>
         </div>
 
-        <!-- Кнопка "Создать запись" с правильными отступами -->
-        <a href="{% url 'diary:entry_create' %}{% if current_notebook_id %}?notebook={{ current_notebook_id }}{% endif %}" class="btn-gold" style="padding: 10px 20px; font-size: 14px; margin-top: 10px; margin-bottom: 10px;">
-            + Создать запись
-        </a>
+        <!-- Блок кнопок управления -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; margin-bottom: 10px;">
+            {% if current_notebook %}
+                <!-- Кнопки для управления текущей папкой -->
+                <a href="{% url 'diary:notebook_create' %}?parent={{ current_notebook.id }}"
+                   class="btn-outline"
+                   style="padding: 10px 16px; font-size: 14px; text-decoration: none;">
+                    + Подпапка
+                </a>
+                <a href="{% url 'diary:notebook_delete' current_notebook.id %}"
+                   class="btn-outline"
+                   style="padding: 10px 16px; font-size: 14px; text-decoration: none; color: #d9534f; border-color: #f0dada;">
+                    🗑️ Удалить папку
+                </a>
+            {% else %}
+                <!-- Кнопка создания корневой папки (если мы в общем списке) -->
+                <a href="{% url 'diary:notebook_create' %}"
+                   class="btn-outline"
+                   style="padding: 10px 16px; font-size: 14px; text-decoration: none;">
+                    + Создать папку
+                </a>
+            {% endif %}
+
+            <!-- Кнопка "Создать запись" -->
+            <a href="{% url 'diary:entry_create' %}{% if current_notebook_id %}?notebook={{ current_notebook_id }}{% endif %}"
+               class="btn-gold"
+               style="padding: 10px 20px; font-size: 14px; text-decoration: none;">
+                + Создать запись
+            </a>
+        </div>
     </div>
 
     <!-- Блок папок (скрываем при поиске) -->
