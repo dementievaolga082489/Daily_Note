@@ -64,11 +64,19 @@
             <div class="row g-3">
                 {% for child in child_notebooks %}
                     <div class="col-sm-6 col-md-4 col-lg-3">
-                        <a href="{% url 'diary:entry_list' %}?notebook={{ child.id }}" class="folder-card"
-                           oncontextmenu="showContextMenu(event, 'folder', {{ child.id }});">
-                            <span style="font-size: 22px; margin-right: 8px;">📁</span>
-                            <span class="folder-title">{{ child.title }}</span>
-                        </a>
+                        <div class="folder-card-wrapper" style="position: relative;">
+                            <a href="{% url 'diary:entry_list' %}?notebook={{ child.id }}" class="folder-card"
+                               oncontextmenu="showContextMenu(event, 'folder', {{ child.id }}); return false;">
+                                <span style="font-size: 22px; margin-right: 8px;">📁</span>
+                                <span class="folder-title">{{ child.title }}</span>
+                            </a>
+                            <!-- Кнопка меню (три точки) для папки -->
+                            <div class="entry-options-btn"
+                                 onclick="event.preventDefault(); event.stopPropagation(); showContextMenu(event, 'folder', {{ child.id }});"
+                                 title="Действия">
+                                ⋮
+                            </div>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
@@ -79,27 +87,38 @@
     {% if entries %}
         <div class="entry-list" style="margin-top: 30px;">
             {% for entry in entries %}
-                <a href="{{ entry.get_absolute_url }}" class="entry-row-link"
-                   oncontextmenu="showContextMenu(event, 'entry', {{ entry.id }});">
-                    <div class="entry-row">
-                        <div class="entry-date">{{ entry.date|date:"d.m.Y" }}</div>
-                        <div class="entry-title">
-                            {{ entry.title|default:"Без названия" }}
-                        </div>
-                        {% if not current_notebook and entry.notebook %}
-                            <div class="entry-notebook">📁 {{ entry.notebook.title }}</div>
-                        {% endif %}
-                        <div class="entry-preview">
-                            {% if entry.content %}
-                                {{ entry.content|truncatewords:12 }}
-                            {% elif entry.attachments.all %}
-                                <em>📎 Медиафайлы</em>
-                            {% else %}
-                                <em>(пусто)</em>
+                <div class="entry-row-wrapper" style="position: relative; display: flex; align-items: center;">
+                    <!-- Ссылка на саму запись -->
+                    <a href="{{ entry.get_absolute_url }}" class="entry-row-link"
+                       style="flex: 1;"
+                       oncontextmenu="showContextMenu(event, 'entry', {{ entry.id }}); return false;">
+                        <div class="entry-row">
+                            <div class="entry-date">{{ entry.date|date:"d.m.Y" }}</div>
+                            <div class="entry-title">
+                                {{ entry.title|default:"Без названия" }}
+                            </div>
+                            {% if not current_notebook and entry.notebook %}
+                                <div class="entry-notebook">📁 {{ entry.notebook.title }}</div>
                             {% endif %}
+                            <div class="entry-preview">
+                                {% if entry.content %}
+                                    {{ entry.content|truncatewords:12 }}
+                                {% elif entry.attachments.all %}
+                                    <em>📎 Медиафайлы</em>
+                                {% else %}
+                                    <em>(пусто)</em>
+                                {% endif %}
+                            </div>
                         </div>
+                    </a>
+
+                    <!-- Кнопка меню (три точки) для записи -->
+                    <div class="entry-options-btn"
+                         onclick="event.preventDefault(); event.stopPropagation(); showContextMenu(event, 'entry', {{ entry.id }});"
+                         title="Действия">
+                        ⋮
                     </div>
-                </a>
+                </div>
             {% endfor %}
         </div>
 
@@ -146,7 +165,13 @@
             padding-bottom: 20px;
             border-bottom: 1px dashed var(--border-color);
         }
+        .folder-card-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
         .folder-card {
+            flex: 1;
             display: flex;
             align-items: center;
             padding: 12px 16px;
@@ -161,8 +186,6 @@
         .folder-card:hover {
             border-color: var(--accent-green);
             background: var(--bg-sidebar);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
             color: var(--text-dark);
         }
         .folder-title {
@@ -179,16 +202,18 @@
             border-top: 1px solid var(--border-color);
         }
 
+        .entry-row-wrapper {
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.15s;
+        }
+        .entry-row-wrapper:hover {
+            background: var(--bg-card);
+        }
+
         .entry-row-link {
             text-decoration: none;
             color: inherit;
             display: block;
-            border-bottom: 1px solid var(--border-color);
-            transition: background 0.15s;
-        }
-        .entry-row-link:hover {
-            background: var(--bg-card);
-            color: inherit;
         }
 
         .entry-row {
@@ -196,6 +221,7 @@
             align-items: center;
             gap: 16px;
             padding: 14px 12px;
+            padding-right: 40px; /* Место под кнопку меню */
         }
 
         .entry-date {
@@ -230,9 +256,31 @@
             text-overflow: ellipsis;
         }
 
+        /* Кнопка меню (три точки) */
+        .entry-options-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 20px;
+            font-weight: bold;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+            z-index: 10;
+            user-select: none;
+        }
+        .entry-options-btn:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--text-dark);
+        }
+
         @media (max-width: 768px) {
             .entry-preview { display: none; }
             .entry-row { flex-wrap: wrap; gap: 8px; }
+            .entry-options-btn { font-size: 24px; padding: 10px; } /* Увеличиваем для пальца */
         }
     </style>
 {% endblock %}
