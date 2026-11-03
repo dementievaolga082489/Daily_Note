@@ -14,7 +14,6 @@ class MultipleFileInput(FileInput):
     allow_multiple_selected = True
 
     def __init__(self, attrs=None):
-        # Убираем 'multiple' из attrs, чтобы Django не ругался
         attrs = attrs or {}
         attrs.pop("multiple", None)
         super().__init__(attrs)
@@ -142,7 +141,7 @@ class EntryForm(forms.ModelForm):
         self.fields["reminder_at"].input_formats = ["%Y-%m-%dT%H:%M"]
         self.fields["date"].input_formats = ["%Y-%m-%d"]
 
-        # ★ Если редактируем существующую запись, заполняем поле тегов
+        # Если редактируем существующую запись, заполняем поле тегов
         if self.instance and self.instance.pk:
             self.fields["tags_input"].initial = ", ".join(tag.name for tag in self.instance.tags.all())
 
@@ -158,7 +157,7 @@ class EntryForm(forms.ModelForm):
         if commit:
             instance.save()
 
-            # ★ Обрабатываем введенные теги через запятую
+            # Обрабатываем введенные теги через запятую
             tags_str = self.cleaned_data.get("tags_input", "")
             if tags_str:
                 # Разбиваем по запятой, убираем пробелы, создаем или находим теги

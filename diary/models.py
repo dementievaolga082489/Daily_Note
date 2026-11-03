@@ -38,7 +38,6 @@ class Notebook(models.Model):
     )
     title = models.CharField("Название", max_length=120)
 
-    # ★ Новое поле: родительская папка
     parent = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,

@@ -14,15 +14,10 @@ class DiaryViewsTest(TestCase):
     def setUp(self):
         """Создаем тестового пользователя и клиент для запросов."""
         self.user = User.objects.create_user(username="testuser", email="test@example.com", password="testpassword123")
-        # ★ ВЫДАЕМ ПРАВА, ЧТОБЫ ТЕСТЫ НЕ ПАДАЛИ С ОШИБКОЙ 403
-        # Проще всего сделать пользователя суперпользователем для тестов
         self.user.is_superuser = True
         self.user.is_staff = True
         self.user.save()
 
-        # Или можно выдать конкретные права:
-        # perms = Permission.objects.filter(content_type__app_label="diary")
-        # self.user.user_permissions.add(*perms)
 
         self.client = Client()
         self.client.login(email="test@example.com", password="testpassword123")

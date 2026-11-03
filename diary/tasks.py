@@ -46,7 +46,7 @@ def check_and_send_entry_reminders() -> int:
         if not entry.author.email:
             continue
 
-        subject = f"🔔 Напоминание: {entry.title or 'Запись в дневнике'}"
+        subject = f"Напоминание: {entry.title or 'Запись в дневнике'}"
         text = (
             f"Привет, {entry.author.username}!\n\n"
             f"Напоминание по записи:\n\n"
@@ -80,7 +80,7 @@ def check_and_send_calendar_reminders() -> int:
         if not r.author.email:
             continue
 
-        subject = f"📅 Напоминание: {r.title}"
+        subject = f"Напоминание: {r.title}"
         text = (
             f"Привет, {r.author.username}!\n\n"
             f"Напоминание из календаря:\n\n"

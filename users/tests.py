@@ -14,7 +14,7 @@ class UserViewsTest(TestCase):
         """Настройка перед каждым тестом."""
         self.client = Client()
 
-        # ★ Создаем ContentType и Permission ДО отправки формы
+        # Создаем ContentType и Permission ДО отправки формы
         content_type, _ = ContentType.objects.get_or_create(app_label="diary", model="entry")
         self.perm, _ = Permission.objects.get_or_create(
             codename="add_entry", content_type=content_type, defaults={"name": "Can add entry"}
@@ -40,7 +40,7 @@ class UserViewsTest(TestCase):
         self.assertIsNotNone(user)
         self.assertFalse(user.is_active)
 
-        # ★ Проверяем, что права выданы (через user_permissions)
+        # Проверяем, что права выданы (через user_permissions)
         perms = user.user_permissions.all()
         self.assertTrue(perms.filter(codename="add_entry").exists())
 
