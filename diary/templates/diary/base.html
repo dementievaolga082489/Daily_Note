@@ -1,0 +1,590 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Дневник{% endblock %}</title>
+
+    <!-- Локальный Bootstrap -->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Marck+Script&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #f7f7f3;
+            --bg-sidebar: #eef3ef;
+            --bg-card: #ffffff;
+            --text-dark: #2e3b36;
+            --text-muted: #7b8b84;
+            --accent-green: #8da896;
+            --accent-green-hover: #7a9684;
+            --accent-gold: #cbaa5a;
+            --accent-gold-hover: #b89a4d;
+            --border-color: #e3e8e4;
+            --active-bg: #8da896;
+            --active-text: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            font-family: 'Comfortaa', cursive, sans-serif;
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ─── Базовые стили для полей и кнопок ─── */
+        input, textarea, select {
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            outline: none;
+            background: #fff;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 2px rgba(141, 168, 150, 0.2);
+        }
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        /* Убираем стандартные синие ссылки */
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* ─── Стили для кнопки "Показать пароль" ─── */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .password-wrapper input {
+            padding-right: 40px; /* Место под иконку */
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: var(--text-muted);
+            user-select: none;
+            padding: 0;
+            line-height: 1;
+        }
+        .toggle-password:hover {
+            color: var(--text-dark);
+            background: none;
+        }
+
+        /* ─── Шапка сверху ─── */
+        .topbar {
+            position: fixed;
+            top: 0; right: 0; left: 280px;
+            height: 70px;
+            background: var(--bg-main);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 40px;
+            z-index: 100;
+        }
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            margin-right: 20px;
+        }
+        .btn-outline-top {
+            border: 1px solid var(--text-dark);
+            border-radius: 6px;
+            padding: 6px 16px;
+            font-size: 13px;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            cursor: pointer;
+        }
+        .btn-outline-top:hover { background: #e0e0e0; }
+
+        /* ─── Сайдбар ─── */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            box-sizing: border-box;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 200;
+            transition: left 0.3s ease;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-decoration: none;
+            margin-bottom: 30px;
+            padding-left: 10px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .nav-menu { display: flex; flex-direction: column; gap: 5px; margin-bottom: 30px; position: relative; z-index: 5; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .nav-item:hover { background: rgba(0,0,0,0.05); text-decoration: none; }
+        .nav-item.active {
+            background: var(--active-bg);
+            color: var(--active-text);
+            font-weight: 600;
+        }
+
+        /* ─── Дерево папок ─── */
+        .folder-section { margin-top: 10px; position: relative; z-index: 5; }
+        .folder-header {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 12px; text-transform: uppercase; color: var(--text-muted);
+            margin-bottom: 10px; padding: 0 10px; letter-spacing: 1px;
+        }
+        .nb-sublist { list-style: none; padding: 0; margin: 0; }
+        .nb-tree-item { margin: 2px 0; }
+        .nb-row { display: flex; align-items: center; border-radius: 6px; position: relative; }
+        .nb-row:hover { background: rgba(0,0,0,0.03); }
+
+        .nb-subdetails summary { display: flex; align-items: center; cursor: pointer; list-style: none; width: 100%; outline: none; }
+        .nb-subdetails summary::-webkit-details-marker { display: none; }
+        .nb-arrow { font-size: 10px; color: var(--text-muted); width: 20px; text-align: center; transition: transform 0.2s; }
+        .nb-subdetails[open] > summary .nb-arrow { transform: rotate(90deg); }
+
+        .nb-link { flex: 1; padding: 6px 8px; color: var(--text-dark); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .nb-link.active { background: rgba(0,0,0,0.05); border-radius: 6px; font-weight: 600; }
+
+        .nb-spacer { width: 20px; flex-shrink: 0; }
+        .nb-content { display: flex; align-items: center; flex: 1; padding: 0 8px; gap: 8px; overflow: hidden; }
+        .folder-icon { font-size: 16px; }
+
+        /* Кнопки действий в папках */
+        .nb-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.2s; padding-right: 5px; }
+        .nb-row:hover .nb-actions { opacity: 1; }
+        .nb-action { color: var(--text-muted) !important; font-size: 16px; text-decoration: none; padding: 0 4px; border-radius: 4px; cursor: pointer; line-height: 1; }
+        .nb-action:hover { background: rgba(0,0,0,0.08); color: var(--text-dark) !important; }
+
+        /* ─── Основной контент ─── */
+        .main-content {
+            flex: 1;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 70px 40px 40px 40px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Поисковая строка */
+        .search-bar {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 10;
+        }
+        .search-field label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px; }
+        .search-field input { width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: #fff; color: var(--text-dark); }
+        .btn-search { background: var(--accent-gold); color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+        .btn-search:hover { background: var(--accent-gold-hover); }
+        .btn-reset { background: transparent; color: var(--text-dark); border: 1px solid var(--border-color); padding: 8px 20px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-reset:hover { background: #e0e0e0; text-decoration: none; }
+
+        /* Общие стили для кнопок */
+        .btn-gold { background: var(--accent-gold); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.2s; }
+        .btn-gold:hover { background: var(--accent-gold-hover); color: #fff; text-decoration: none; }
+        .btn-green { background: var(--accent-green); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.2s; }
+        .btn-green:hover { background: var(--accent-green-hover); color: #fff; text-decoration: none; }
+        .btn-outline { background: transparent; color: var(--text-dark); border: 1px solid var(--border-color); padding: 9px 20px; border-radius: 8px; font-size: 14px; text-decoration: none; display: inline-block; transition: background 0.2s; }
+        .btn-outline:hover { background: #e0e0e0; text-decoration: none; }
+
+        /* ─── Бургер и оверлей (скрыты на десктопе) ─── */
+        .burger { display: none; }
+        .sidebar-overlay { display: none; }
+
+        /* ─── Мобильная адаптация ─── */
+        @media (max-width: 992px) {
+            .topbar {
+                left: 0;
+                padding: 0 16px;
+                height: 60px;
+                justify-content: space-between; /* Распределяем элементы */
+            }
+
+            /* Показываем бургер */
+            .burger {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                background: transparent;
+                border: none;
+                font-size: 24px;
+                color: var(--text-dark);
+                cursor: pointer;
+            }
+
+            /* Сайдбар выезжает слева */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -100%; /* Спрятан за экраном */
+                width: 280px;
+                height: 100vh;
+                z-index: 200;
+            }
+            .sidebar.open {
+                left: 0; /* Выезжает */
+            }
+
+            /* Оверлей (затемнение) */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 150;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            .sidebar-overlay.active {
+                display: block;
+                opacity: 1;
+            }
+
+            /* Контент */
+            .main-content {
+                padding: 76px 16px 24px 16px;
+            }
+
+            /* Поисковая строка */
+            .search-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 16px;
+                gap: 12px;
+            }
+            .search-bar form {
+                flex-direction: column;
+                align-items: stretch !important;
+            }
+            .search-bar .search-field {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .search-bar .btn-search,
+            .search-bar .btn-reset {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+            .search-bar > div > div {
+                width: 100%;
+            }
+
+            /* Карточки */
+            .entry-card {
+                padding: 18px;
+            }
+            .page-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Оверлей для затемнения (виден только на мобильных) -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- Сайдбар -->
+<aside class="sidebar">
+    <a href="{% url 'diary:index' %}" class="brand">
+        Дневник
+    </a>
+
+    <nav class="nav-menu">
+        <a href="{% url 'diary:entry_list' %}?all=1" class="nav-item {% if request.resolver_match.url_name == 'entry_list' %}active{% endif %}">
+             Все записи
+        </a>
+        <a href="{% url 'diary:calendar' %}" class="nav-item {% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
+            Напоминания
+        </a>
+        <a href="{% url 'users:profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+            Профиль
+        </a>
+    </nav>
+
+    {% if user.is_authenticated %}
+    <div class="folder-section">
+        <div class="folder-header">
+            <span>ДНЕВНИКИ</span>
+            <div>
+                <a href="#" onclick="collapseAllFolders()" style="color:var(--text-muted); text-decoration:none; margin-right:5px; font-size: 16px;" title="Свернуть всё">⇱</a>
+                <a href="{% url 'diary:notebook_create' %}" style="color:var(--text-muted); text-decoration:none; font-size: 16px;" title="Создать дневник">+</a>
+            </div>
+        </div>
+        <ul class="nb-sublist">
+            {% include "diary/notebook_tree.html" with notebooks=side_notebooks %}
+        </ul>
+    </div>
+    {% endif %}
+</aside>
+
+<!-- Шапка -->
+<header class="topbar">
+    <!-- Бургер для мобильных -->
+    <button class="burger" onclick="toggleSidebar()" aria-label="Меню">☰</button>
+
+    {% if user.is_authenticated %}
+        <div class="topbar-user">
+            <span>{{ user.full_name }}</span>
+        </div>
+        <a href="{% url 'users:logout' %}" class="btn-outline-top">
+            Выйти
+        </a>
+    {% else %}
+        <a href="{% url 'users:login' %}" class="btn-outline-top">Вход</a>
+        <a href="{% url 'users:register' %}" class="btn-gold ms-2">Регистрация</a>
+    {% endif %}
+</header>
+
+<!-- Основной контент -->
+<main class="main-content">
+    <!-- Поисковая строка -->
+    <div class="search-bar">
+        <form method="get" action="{% url 'diary:entry_list' %}" style="display:flex; width:100%; gap:15px; align-items:flex-end; flex-wrap:wrap;">
+            {% if request.GET.notebook %}
+                <input type="hidden" name="notebook" value="{{ request.GET.notebook }}">
+            {% endif %}
+            <div class="search-field" style="flex:1; min-width:150px;">
+                <label>Поиск (слово/заголовок)</label>
+                <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Введите слово...">
+            </div>
+            <div class="search-field" style="flex:1; min-width:150px;">
+                <label>По тегу</label>
+                <input type="text" name="tag" value="{{ request.GET.tag|default:'' }}" placeholder="Например: спорт">
+            </div>
+            <div class="search-field" style="width:130px;">
+                <label>Дата с</label>
+                <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}">
+            </div>
+            <div class="search-field" style="width:130px;">
+                <label>Дата по</label>
+                <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button type="submit" class="btn-search">🔍 Искать</button>
+                <a href="{% url 'diary:entry_list' %}{% if request.GET.notebook %}?notebook={{ request.GET.notebook }}{% endif %}" class="btn-reset">Сброс</a>
+            </div>
+        </form>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}" style="border-radius:8px; margin-bottom: 20px;">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Контекстное меню -->
+<div id="contextMenu" style="
+    display:none;
+    position:fixed;
+    background:#fff;
+    border:1px solid var(--border-color);
+    border-radius:8px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    z-index:10000;
+    min-width:180px;
+    padding:5px 0;
+    max-width: calc(100vw - 20px);
+">
+    <a href="#" id="ctxEdit" style="display:block; padding:10px 15px; color:var(--text-dark); text-decoration:none; font-size:14px;">✏️ Редактировать</a>
+    <a href="#" id="ctxDelete" style="display:block; padding:10px 15px; color:#d9534f; text-decoration:none; font-size:14px;">🗑️ Удалить</a>
+</div>
+
+<!-- Локальный Bootstrap JS -->
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+<script>
+    const contextMenu = document.getElementById('contextMenu');
+    const ctxEdit = document.getElementById('ctxEdit');
+    const ctxDelete = document.getElementById('ctxDelete');
+    let touchTimer = null;
+
+    function showContextMenu(e, type, id) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (type === 'folder') {
+            ctxEdit.href = `/notebooks/${id}/edit/`;
+            ctxDelete.href = `/notebooks/${id}/delete/`;
+            ctxEdit.innerHTML = '✏️ Переименовать папку';
+            ctxDelete.innerHTML = '🗑️ Удалить папку';
+        } else if (type === 'entry') {
+            ctxEdit.href = `/entries/${id}/edit/`;
+            ctxDelete.href = `/entries/${id}/delete/`;
+            ctxEdit.innerHTML = '✏️ Редактировать запись';
+            ctxDelete.innerHTML = '🗑️ Удалить запись';
+        }
+
+        // Сначала показываем меню (чтобы узнать его размеры)
+        contextMenu.style.display = 'block';
+
+        // Получаем координаты (для мыши и для пальца)
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+            clientX = e.changedTouches[0].clientX;
+            clientY = e.changedTouches[0].clientY;
+        }
+
+        const menuWidth = contextMenu.offsetWidth;
+        const menuHeight = contextMenu.offsetHeight;
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+
+        // Корректируем, чтобы не вылезало за экран
+        let x = clientX;
+        let y = clientY;
+        if (x + menuWidth > screenWidth) x = screenWidth - menuWidth - 10;
+        if (y + menuHeight > screenHeight) y = screenHeight - menuHeight - 10;
+        if (x < 10) x = 10;
+        if (y < 10) y = 10;
+
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+    }
+
+    // Закрываем меню при клике/тапе вне его
+    document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none';
+    });
+    document.addEventListener('touchstart', (e) => {
+        if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none';
+    });
+    window.addEventListener('scroll', () => contextMenu.style.display = 'none');
+
+    function collapseAllFolders() {
+        document.querySelectorAll('details.nb-subdetails').forEach(d => d.removeAttribute('open'));
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('folder-')) localStorage.setItem(key, 'closed');
+        }
+    }
+
+    // Логика мобильного бургера
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+
+        if (sidebar.classList.contains('open')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Логика запоминания открытых папок
+        document.querySelectorAll('details.nb-subdetails[id^="folder-"]').forEach(details => {
+            if (localStorage.getItem(details.id) === 'open') details.setAttribute('open', 'open');
+            else if (localStorage.getItem(details.id) === 'closed') details.removeAttribute('open');
+
+            details.addEventListener('toggle', () => {
+                localStorage.setItem(details.id, details.open ? 'open' : 'closed');
+            });
+        });
+
+        // 2. Логика добавления кнопки "Показать пароль"
+        document.querySelectorAll('input[type="password"]').forEach(input => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'password-wrapper';
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'toggle-password';
+            toggleBtn.innerHTML = '👁️';
+            toggleBtn.title = 'Показать пароль';
+
+            toggleBtn.addEventListener('click', function() {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggleBtn.innerHTML = '🙈';
+                    toggleBtn.title = 'Скрыть пароль';
+                } else {
+                    input.type = 'password';
+                    toggleBtn.innerHTML = '👁️';
+                    toggleBtn.title = 'Показать пароль';
+                }
+            });
+
+            wrapper.appendChild(toggleBtn);
+        });
+    });
+</script>
+</body>
+</html>

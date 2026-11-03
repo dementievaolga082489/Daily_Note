@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Записи за {{ target_date|date:"j E Y" }}{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1 class="page-title">Записи за {{ target_date|date:"j E Y" }}</h1>
+    </div>
+
+    <h5 class="mt-4 mb-2">Записи</h5>
+    {% if entries %}
+        <ul class="list-group mb-4">
+            {% for e in entries %}
+                <li class="list-group-item">
+                    <a href="{{ e.get_absolute_url }}" style="color: var(--text);">{{ e.title }}</a>
+                    <span class="text-muted small">— {{ e.created_at|date:"H:i" }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">Нет записей.</p>
+    {% endif %}
+
+    <h5 class="mb-2">Напоминания</h5>
+    {% if reminders %}
+        <ul class="list-group">
+            {% for r in reminders %}
+                <li class="list-group-item">
+                    {{ r.title }} — {{ r.remind_at|date:"H:i" }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">Нет напоминаний.</p>
+    {% endif %}
+{% endblock %}

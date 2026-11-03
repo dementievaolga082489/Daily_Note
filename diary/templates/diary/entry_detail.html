@@ -1,0 +1,113 @@
+{% extends "diary/base.html" %}
+{% block title %}{{ entry.title|default:"Без названия" }}{% endblock %}
+
+{% block content %}
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
+        <div>
+            <h1 class="page-title" style="font-size: 28px; font-weight: 700; margin: 0 0 10px 0;">
+                {{ entry.title|default:"Без названия" }}
+            </h1>
+            <!-- Хлебные крошки -->
+            {% if breadcrumbs %}
+                <div class="breadcrumbs" style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                    <a href="{% url 'diary:entry_list' %}" style="color: var(--text-muted); text-decoration: none;">Главная</a>
+                    {% for crumb in breadcrumbs %}
+                        <span>/</span>
+                        <a href="{% url 'diary:entry_list' %}?notebook={{ crumb.id }}" style="color: var(--text-muted); text-decoration: none;">{{ crumb.title }}</a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="text-muted" style="font-size: 14px;">{{ entry.created_at|date:"j E Y, H:i" }}</div>
+    </div>
+
+    <div style="max-width: 860px;">
+        <p style="white-space: pre-line; font-size: 16px; line-height: 1.75; color: var(--text-dark);">
+            {{ entry.content }}
+        </p>
+
+        {% with entry.tags.all as tags %}
+            {% if tags %}
+                <div class="tags mt-4" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+                    {% for tag in tags %}
+                        <span style="font-size: 12px; background: var(--bg-sidebar); color: var(--text-dark); padding: 4px 10px; border-radius: 12px;">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Блок вывода вложений -->
+        {% if entry.attachments.all %}
+            <div class="attachments-gallery mt-5" style="margin-top: 30px; margin-bottom: 30px;">
+                <h4 class="mb-3" style="font-weight: 700; font-size: 20px; color: var(--text-dark);">Вложения</h4>
+                <div class="row g-3">
+                    {% for att in entry.attachments.all %}
+                        {% if att.file %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card p-2 position-relative" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; height: 100%;">
+
+                                    <!-- Кнопка удаления вложения -->
+                                    <a href="{% url 'diary:attachment_delete' att.id %}"
+                                       onclick="return confirm('Удалить этот файл?');"
+                                       style="position: absolute; top: 8px; right: 8px; z-index: 10; background: rgba(255,255,255,0.9); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; color: #d9534f; text-decoration: none; font-weight: bold; font-size: 18px; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                                       title="Удалить файл">×</a>
+
+                                    {# 1. Если это видео #}
+                                    {% if att.is_video %}
+                                        <video controls style="width: 100%; border-radius: 8px; max-height: 300px; object-fit: contain; background: #000;">
+                                            <source src="{{ att.file.url }}" type="video/mp4">
+                                            Ваш браузер не поддерживает видео.
+                                        </video>
+
+                                    {# 2. Если это документ (PDF, Word и т.д.) #}
+                                    {% elif att.is_document %}
+                                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #f9f9f9; border-radius: 8px; padding: 15px; text-align: center;">
+                                            <span style="font-size: 40px; margin-bottom: 10px;">📄</span>
+                                            <span style="font-size: 13px; color: var(--text-dark); word-break: break-all; margin-bottom: 10px;">
+                                                {{ att.filename|truncatechars:30 }}
+                                            </span>
+
+                                            <!-- ★ Кнопки "Открыть" и "Скачать" -->
+                                            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                                <a href="{{ att.file.url }}" target="_blank" class="btn-outline" style="padding: 5px 15px; font-size: 12px; text-decoration: none;">
+                                                    Открыть
+                                                </a>
+                                                <a href="{{ att.file.url }}" download class="btn-outline" style="padding: 5px 15px; font-size: 12px; text-decoration: none;">
+                                                    Скачать
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                    {# 3. Если это обычная картинка или рисунок #}
+                                    {% else %}
+                                        <a href="{{ att.file.url }}" target="_blank">
+                                            <img src="{{ att.file.url }}" alt="Изображение" style="width: 100%; border-radius: 8px; max-height: 300px; object-fit: cover;">
+                                        </a>
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if entry.reminder_at %}
+            <p class="mt-4 text-muted" style="font-size: 14px; color: var(--text-muted); margin-top: 20px;">
+                ⏰ Напоминание: {{ entry.reminder_at|date:"j E Y, H:i" }}
+                {% if entry.reminder_sent %}<span style="color: var(--accent-green);">(отправлено)</span>{% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="mt-5 d-flex gap-3 flex-wrap" style="margin-top: 40px;">
+        <a href="{% url 'diary:entry_update' entry.pk %}" class="btn-gold" style="padding: 10px 22px; font-size: 14px; text-decoration: none;">
+            ✏️ Редактировать
+        </a>
+        <a href="{% url 'diary:entry_delete' entry.pk %}" class="btn-outline" style="padding: 9px 22px; font-size: 14px; text-decoration: none;">
+            🗑️ Удалить
+        </a>
+    </div>
+{% endblock %}
