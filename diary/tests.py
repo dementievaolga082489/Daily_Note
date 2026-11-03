@@ -18,7 +18,6 @@ class DiaryViewsTest(TestCase):
         self.user.is_staff = True
         self.user.save()
 
-
         self.client = Client()
         self.client.login(email="test@example.com", password="testpassword123")
 
