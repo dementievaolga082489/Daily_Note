@@ -1,0 +1,42 @@
+{% extends "diary/base.html" %}
+{% block title %}Поиск по названию{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1 class="page-title">Поиск по названию</h1>
+    </div>
+
+    <form method="get" class="mb-4" style="max-width: 420px;">
+        <div class="input-group">
+            <input type="text" name="title" value="{{ query }}" class="form-control"
+                   placeholder="Название...">
+            <button class="btn btn-outline-secondary" type="submit">Искать</button>
+        </div>
+    </form>
+
+    {% if query %}
+        <h5>Записи</h5>
+        {% if entries %}
+            <ul class="list-group mb-4">
+                {% for e in entries %}
+                    <li class="list-group-item">
+                        <a href="{{ e.get_absolute_url }}" style="color: var(--text);">{{ e.title }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Не найдено.</p>
+        {% endif %}
+
+        <h5>Напоминания</h5>
+        {% if reminders %}
+            <ul class="list-group">
+                {% for r in reminders %}
+                    <li class="list-group-item">{{ r.title }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Не найдено.</p>
+        {% endif %}
+    {% endif %}
+{% endblock %}
